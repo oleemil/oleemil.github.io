@@ -1,6 +1,7 @@
 /* ============================================================
    inmoment · v6
-   Nav, mobilmeny, reveal, hero-video, marquee, filter,
+   Side-intro, nav (solid + skjul/vis), mobilmeny, reveal,
+   hero-video m/innfading, scrollspy, parallax, marquee, filter,
    lightbox m/pilnavigasjon + sveip, FAQ-akkordeon, ankerscroll.
    Vanilla JS, ingen avhengigheter. Tåler fraværende elementer.
    ============================================================ */
@@ -47,6 +48,29 @@
     el.textContent = new Date().getFullYear();
   });
 
+  /* ---- Side-intro: .is-loaded på body når siden er klar ----
+     Settes ved window.load ELLER når DOM + fonter er klare.
+     Hard timeout på 1200 ms sørger for at klassen ALLTID settes,
+     også hvis hero-videoen henger på tregt nett. */
+  let isLoadedSet = false;
+  const setLoaded = () => {
+    if (isLoadedSet) return;
+    isLoadedSet = true;
+    document.body.classList.add('is-loaded');
+  };
+  window.setTimeout(setLoaded, 1200);
+  window.addEventListener('load', setLoaded, { once: true });
+  if (document.fonts && document.fonts.ready) {
+    const whenFontsReady = () => {
+      document.fonts.ready.then(setLoaded).catch(setLoaded);
+    };
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', whenFontsReady, { once: true });
+    } else {
+      whenFontsReady();
+    }
+  }
+
   /* Hovedløp i try/catch: skulle noe feile halvveis,
      sørger fallbacken for at alt innhold likevel blir synlig. */
   try {
@@ -55,6 +79,20 @@
     if (heroVideo) {
       heroVideo.muted = true;
       heroVideo.playsInline = true;
+
+      // Fade videoen inn når den faktisk spiller, ut igjen ved pause/tomming
+      heroVideo.addEventListener('playing', () => {
+        heroVideo.classList.add('is-playing');
+      });
+      ['pause', 'emptied'].forEach((evt) => {
+        heroVideo.addEventListener(evt, () => {
+          heroVideo.classList.remove('is-playing');
+        });
+      });
+      // Hvis videoen allerede spiller når scriptet kjører
+      if (heroVideo.readyState >= 3 && !heroVideo.paused) {
+        heroVideo.classList.add('is-playing');
+      }
 
       if (reducedMotion) {
         // Respekter reduced motion: ingen autoplay, vis poster/første frame
@@ -100,16 +138,30 @@
       }
     }
 
-    /* ---- Nav: papirbakgrunn etter hero (rAF-throttled) ---- */
+    /* ---- Nav: papirbakgrunn etter hero + skjul/vis ved scroll ---- */
     const nav = $('.nav');
     if (nav) {
       // .hero på forsiden, .page-hero på undersider, ellers lav terskel
       const heroEl = $('.hero') || $('.page-hero');
       const limit = () => (heroEl ? heroEl.offsetHeight - 90 : 24);
+      const HIDE_AFTER = 400; // px ned før nav kan skjules
+      const HIDE_DELTA = 4; // px bevegelse før vi reagerer (mot flimmer)
+      let lastY = window.scrollY;
       let navTicking = false;
 
       const updateNav = () => {
-        document.body.classList.toggle('nav-solid', window.scrollY > limit());
+        const y = window.scrollY;
+        document.body.classList.toggle('nav-solid', y > limit());
+
+        // Skjul ved nedscroll, vis ved oppscroll – aldri når
+        // menyen er åpen eller vi er nær toppen av siden
+        if (document.body.classList.contains('menu-open') || y < HIDE_AFTER) {
+          document.body.classList.remove('nav-hidden');
+          lastY = y;
+        } else if (Math.abs(y - lastY) >= HIDE_DELTA) {
+          document.body.classList.toggle('nav-hidden', y > lastY);
+          lastY = y;
+        }
         navTicking = false;
       };
       const onNavScroll = () => {
@@ -121,6 +173,46 @@
 
       updateNav();
       window.addEventListener('scroll', onNavScroll, { passive: true });
+    }
+
+    /* ---- Scrollspy i nav (kun forsiden) ----
+     Marker lenken til seksjonen som er i viewport med
+     aria-current="location"; attributtet fjernes helt når
+     ingen av seksjonene er aktive. */
+    const spySections = ['tjenester', 'kontakt']
+      .map((id) => document.querySelector("section[id='" + id + "']"))
+      .filter(Boolean);
+    // Kun forsiden: undersider har selv en #kontakt-seksjon, og setSpy
+    // ville ellers fjernet den statiske aria-current="page" i nav-en.
+    if (spySections.length && hasIO && document.body.classList.contains('home-page')) {
+      const navAnchors = $$('.nav-links a');
+      let activeSpyId = null;
+
+      const setSpy = (id) => {
+        navAnchors.forEach((a) => {
+          const href = a.getAttribute('href') || '';
+          if (id && href.slice(-(id.length + 1)) === '#' + id) {
+            a.setAttribute('aria-current', 'location');
+          } else {
+            a.removeAttribute('aria-current');
+          }
+        });
+      };
+
+      const spyIO = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              activeSpyId = entry.target.id;
+            } else if (activeSpyId === entry.target.id) {
+              activeSpyId = null;
+            }
+          });
+          setSpy(activeSpyId);
+        },
+        { rootMargin: '-45% 0px -50% 0px', threshold: 0 }
+      );
+      spySections.forEach((sec) => spyIO.observe(sec));
     }
 
     /* ---- Mobilmeny: fokus-felle, Escape, klikk utenfor, resize ---- */
@@ -384,7 +476,7 @@
       /* Sveip: venstre/høyre for forrige/neste, ned for å lukke.
          Bildet følger fingeren; ved for lite sveip fades det tilbake.
          Horisontal bevegelse må dominere for ikke å kollidere med
-         vertikal side-scroll (CSS: .lightbox { touch-action: pan-y }). */
+         vertikal side-scroll (CSS: .lightbox-img { touch-action: pan-y }). */
       let touchStartX = 0;
       let touchStartY = 0;
       let touchDelta = 0;
@@ -458,8 +550,55 @@
       lb.addEventListener('touchend', endTouch);
       lb.addEventListener('touchcancel', endTouch);
     }
+
+    /* ---- Subtil parallax på .break-bg ----
+     rAF-drevet translate3d, maks ~8 % av elementhøyden.
+     Kun på finpointerskjermer, uten reduced motion, og bare
+     mens elementet er synlig i viewport. */
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (!reducedMotion && finePointer) {
+      $$('.break-bg').forEach((bg) => {
+        let bgVisible = !hasIO; // uten IO antar vi synlig
+        let plxTicking = false;
+
+        const updateParallax = () => {
+          plxTicking = false;
+          if (!bgVisible) return;
+          const rect = bg.getBoundingClientRect();
+          const vh = window.innerHeight || document.documentElement.clientHeight;
+          if (!rect.height || !vh) return;
+          // -1 (under viewport) → +1 (over); 0 når sentrert
+          const progress =
+            (rect.top + rect.height / 2 - vh / 2) / (vh / 2 + rect.height / 2);
+          const clamped = Math.max(-1, Math.min(1, progress));
+          const amp = rect.height * 0.08;
+          bg.style.transform = 'translate3d(0, ' + (-clamped * amp).toFixed(1) + 'px, 0)';
+        };
+        const onPlxScroll = () => {
+          if (!plxTicking) {
+            plxTicking = true;
+            window.requestAnimationFrame(updateParallax);
+          }
+        };
+
+        if (hasIO) {
+          const plxIO = new IntersectionObserver(
+            (entries) => {
+              bgVisible = entries[0].isIntersecting;
+              if (bgVisible) updateParallax();
+            },
+            { threshold: 0 }
+          );
+          plxIO.observe(bg);
+        }
+        updateParallax();
+        window.addEventListener('scroll', onPlxScroll, { passive: true });
+        window.addEventListener('resize', onPlxScroll, { passive: true });
+      });
+    }
   } catch (err) {
     /* Fallback ved uventet feil: vis alt innhold likevel */
+    document.body.classList.add('is-loaded');
     $$('.reveal').forEach((el) => el.classList.add('is-visible'));
     $$('.archive-item').forEach((el) => el.classList.add('is-visible'));
     if (window.console && typeof window.console.error === 'function') {
