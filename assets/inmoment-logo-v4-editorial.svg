@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 280" role="img" aria-labelledby="title desc">
+  <title id="title">inmoment logo v4 editorial</title>
+  <desc id="desc">Editorial wordmark med lange linjer og subtil undertittel.</desc>
+
+  <rect width="1100" height="280" fill="none" />
+
+  <path d="M60 138 H320" stroke="#7b3f53" stroke-width="2" stroke-linecap="round" opacity="0.75" />
+  <path d="M780 138 H1040" stroke="#7b3f53" stroke-width="2" stroke-linecap="round" opacity="0.75" />
+
+  <text
+    x="360"
+    y="156"
+    fill="#1d1d21"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="112"
+    font-weight="600"
+    letter-spacing="0.8"
+  >inmoment</text>
+
+  <text
+    x="364"
+    y="194"
+    fill="#7b3f53"
+    font-family="'Outfit', Arial, sans-serif"
+    font-size="22"
+    font-weight="500"
+    letter-spacing="6"
+    opacity="0.9"
+  >ELINE ODEGAARD</text>
+</svg>

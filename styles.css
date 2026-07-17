@@ -1,0 +1,2336 @@
+/* ============================================================
+   inmoment · v5 revidert — «Editorial / Cinematic»
+   Film og foto ved Eline Ødegaard
+   Varmt papir, stor serif, fullskjerm video-hero.
+   Revidert: mobiltilpasning, tilgjengelighet (skip-link,
+   html.js-gating av reveal), ytelse (content-visibility),
+   FAQ-animasjon, lightbox forberedt for sveip, print.
+   ============================================================ */
+
+:root {
+  --paper: #faf7f2;
+  --paper-2: #f3eee5;
+  --ink: #181511;
+  --ink-2: #2b2720;
+  --mid: #6f6a5f;
+  --faint: #a39b8b;
+  --line: #e6dfd1;
+  --line-soft: #efe9dd;
+  --dark: #131109;
+  --dark-2: #1b1810;
+  --cream: #f6f1e7;
+  --accent: #a4854f;
+
+  --serif: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+  --sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --max: 1440px;
+  --pad: clamp(1.25rem, 4.5vw, 4rem);
+  --nav-h: 86px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.32, 0.72, 0.2, 1);
+}
+
+/* ============================================================
+   RESET & BASE
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--paper);
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
+  /* Tynn, subtil scrollbar (Firefox) */
+  scrollbar-width: thin;
+  scrollbar-color: var(--faint) transparent;
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-weight: 400;
+  font-size: clamp(0.95rem, 0.9rem + 0.18vw, 1.02rem);
+  line-height: 1.75;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  overflow-x: clip; /* clip bryter ikke position: sticky (fallback: hidden) */
+  text-rendering: optimizeLegibility;
+}
+
+img,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+ul {
+  list-style: none;
+}
+
+button {
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+::selection {
+  background: var(--accent);
+  color: var(--paper);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Tydelig fokus også på mørke flater */
+.menu-overlay :focus-visible,
+.lightbox :focus-visible,
+.cta :focus-visible,
+.site-footer :focus-visible {
+  outline-color: var(--cream);
+}
+
+/* Subtil scrollbar (WebKit/Blink) */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--faint);
+  border: 3px solid var(--paper);
+  border-radius: 8px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mid);
+}
+
+.wrap {
+  width: 100%;
+  max-width: var(--max);
+  margin-inline: auto;
+  padding-inline: var(--pad);
+}
+
+/* Ankermål skal ikke havne under den faste nav-baren */
+section[id] {
+  scroll-margin-top: calc(var(--nav-h) + 12px);
+}
+
+/* ============================================================
+   SKIP-LENKE — synlig først ved tastaturfokus
+   ============================================================ */
+
+.skip-link {
+  position: fixed;
+  top: 1rem;
+  left: 1rem;
+  z-index: 400;
+  padding: 14px 22px;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  transform: translateY(-220%);
+  transition: transform 320ms var(--ease), box-shadow 320ms var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+  box-shadow: 0 14px 40px rgba(19, 17, 9, 0.22);
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* ============================================================
+   TYPOGRAFI-PRIMITIVER
+   ============================================================ */
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-family: var(--sans);
+  font-size: 0.66rem;
+  font-weight: 500;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 1.4rem;
+}
+
+.eyebrow::before {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.eyebrow--center::after {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: var(--accent);
+  opacity: 0.7;
+}
+
+.section-title {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.4rem, 5.4vw, 4.4rem);
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.section-title em {
+  font-style: italic;
+  font-weight: 400;
+}
+
+.section-lead {
+  font-size: clamp(0.98rem, 1.15vw, 1.08rem);
+  line-height: 1.85;
+  color: var(--mid);
+  max-width: 54ch;
+}
+
+.section-head {
+  margin-bottom: clamp(3rem, 6vw, 5.5rem);
+}
+
+.section-head--center {
+  text-align: center;
+  max-width: 64ch;
+  margin-inline: auto;
+}
+
+.section-head--center .section-lead {
+  margin-inline: auto;
+  margin-top: 1.1rem;
+}
+
+.section-head--split {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.section-head--split .arrow-link {
+  flex: 0 0 auto;
+}
+
+/* ============================================================
+   NAV — transparent over hero, papir etter scroll
+   ============================================================ */
+
+.nav {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 90;
+  height: var(--nav-h);
+  padding: 0 var(--pad);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--ink);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  transition: background-color 420ms var(--ease), border-color 420ms var(--ease),
+    color 420ms var(--ease), height 420ms var(--ease);
+}
+
+/* Hjem: hvit tekst over videoen */
+.home-page .nav {
+  color: #fff;
+}
+
+/* Etter scroll, og på undersider: papirbakgrunn */
+body.nav-solid .nav,
+body:not(.home-page) .nav {
+  color: var(--ink);
+  background: rgba(250, 247, 242, 0.92);
+  backdrop-filter: blur(14px) saturate(1.15);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  border-bottom-color: var(--line);
+  height: calc(var(--nav-h) - 14px);
+}
+
+/* Meny åpen: nav må ligge OVER det mørke overlayet slik at
+   logo og burger fortsatt er synlige og klikkbare. */
+body.menu-open .nav {
+  z-index: 120;
+  color: #fff;
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom-color: transparent;
+}
+
+.brand {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.35rem, 1.7vw, 1.6rem);
+  letter-spacing: 0.01em;
+  line-height: 1;
+  padding-block: 6px; /* større treffflate uten visuell endring */
+  transition: opacity 260ms var(--ease);
+}
+
+.brand:hover {
+  opacity: 0.65;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: clamp(1.4rem, 2.4vw, 2.6rem);
+  font-size: 0.67rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.nav-links a {
+  position: relative;
+  padding: 6px 0;
+  opacity: 0.92;
+  transition: opacity 240ms var(--ease);
+}
+
+.nav-links a:hover {
+  opacity: 1;
+}
+
+.nav-links a::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 420ms var(--ease);
+}
+
+.nav-links a:hover::after,
+.nav-links a[aria-current='page']::after {
+  transform: scaleX(1);
+}
+
+/* CTA-knapp i nav — uten !important, høyere spesifisitet i stedet */
+.nav-links a.nav-cta {
+  padding: 11px 22px;
+  border: 1px solid currentColor;
+  opacity: 1;
+  transition: background-color 300ms var(--ease), color 300ms var(--ease),
+    border-color 300ms var(--ease);
+}
+
+.nav-links a.nav-cta::after {
+  content: none;
+}
+
+.home-page:not(.nav-solid) .nav-cta:hover {
+  background-color: #fff;
+  color: var(--ink);
+}
+
+body.nav-solid .nav-cta:hover,
+body:not(.home-page) .nav-cta:hover {
+  background-color: var(--ink);
+  color: var(--paper);
+}
+
+/* --- Burger (mobil) --- */
+
+.nav-toggle {
+  display: none;
+  position: relative;
+  z-index: 110;
+  width: 44px;
+  height: 44px;
+  margin-right: -8px;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.nav-toggle span {
+  display: block;
+  width: 26px;
+  height: 1.5px;
+  background: currentColor;
+  transition: transform 420ms var(--ease), opacity 300ms var(--ease), background 300ms var(--ease);
+}
+
+body.menu-open .nav-toggle {
+  color: #fff;
+}
+
+body.menu-open .nav-toggle span:nth-child(1) {
+  transform: translateY(4.25px) rotate(45deg);
+}
+
+body.menu-open .nav-toggle span:nth-child(2) {
+  transform: translateY(-4.25px) rotate(-45deg);
+}
+
+/* --- Mobilmeny-overlay --- */
+
+.menu-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: var(--dark);
+  color: var(--cream);
+  display: flex;
+  flex-direction: column;
+  padding: calc(var(--nav-h) + env(safe-area-inset-top, 0px)) var(--pad)
+    calc(var(--pad) + env(safe-area-inset-bottom, 0px));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 480ms var(--ease-soft), visibility 0s linear 480ms;
+}
+
+body.menu-open .menu-overlay {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 480ms var(--ease-soft), visibility 0s;
+}
+
+.menu-overlay nav {
+  margin-top: auto; /* sammen med margin-bottom:auto på meta sentreres innholdet,
+                       og ved overflow forankres det i toppen (ingenting klippes) */
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.menu-overlay nav a {
+  display: block;
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2.4rem, 9vw, 3.4rem);
+  line-height: 1.25;
+  padding-block: 0.4rem; /* min ~60px treffflate på mobil */
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 600ms var(--ease), transform 600ms var(--ease),
+    color 300ms var(--ease);
+}
+
+.menu-overlay nav a:hover {
+  color: var(--accent);
+}
+
+body.menu-open .menu-overlay nav a {
+  opacity: 1;
+  transform: none;
+}
+
+body.menu-open .menu-overlay nav a:nth-child(1) { transition-delay: 120ms; }
+body.menu-open .menu-overlay nav a:nth-child(2) { transition-delay: 190ms; }
+body.menu-open .menu-overlay nav a:nth-child(3) { transition-delay: 260ms; }
+body.menu-open .menu-overlay nav a:nth-child(4) { transition-delay: 330ms; }
+body.menu-open .menu-overlay nav a:nth-child(5) { transition-delay: 400ms; }
+
+/* Meta-rad nederst i menyen — tydeligere skille og bedre treffflate */
+.menu-overlay .menu-meta {
+  margin-top: clamp(2rem, 6vh, 3.5rem);
+  margin-bottom: auto; /* sentrerer blokka sammen med nav sin margin-top:auto */
+  padding-top: 1.6rem;
+  border-top: 1px solid rgba(246, 241, 231, 0.14);
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 231, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  opacity: 0;
+  transition: opacity 600ms var(--ease) 480ms;
+}
+
+.menu-overlay .menu-meta a {
+  display: inline-block;
+  padding-block: 6px;
+  transition: color 260ms var(--ease);
+}
+
+.menu-overlay .menu-meta a:hover {
+  color: var(--cream);
+}
+
+body.menu-open .menu-overlay .menu-meta {
+  opacity: 1;
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* ============================================================
+   HERO — video helt opp i toppen, bak nav
+   ============================================================ */
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 100vh; /* fallback */
+  height: 100svh; /* stabil høyde på iOS (adresselinje) */
+  min-height: 600px;
+  overflow: hidden;
+  background: var(--dark);
+  color: #fff;
+}
+
+.hero-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Scrim: mørkere topp (for nav) og bunn (for tekst/scroll) */
+.hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(180deg, rgba(8, 7, 4, 0.5) 0%, rgba(8, 7, 4, 0) 26%),
+    linear-gradient(0deg, rgba(8, 7, 4, 0.55) 0%, rgba(8, 7, 4, 0) 38%),
+    radial-gradient(ellipse at center, rgba(8, 7, 4, 0.18) 0%, rgba(8, 7, 4, 0.32) 100%);
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: var(--nav-h) var(--pad) 0;
+}
+
+.hero-kicker {
+  font-size: clamp(0.62rem, 0.9vw, 0.72rem);
+  font-weight: 500;
+  letter-spacing: 0.42em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+  display: inline-flex;
+  align-items: center;
+  gap: 1.1rem;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: hero-in 1100ms var(--ease) 400ms forwards;
+}
+
+.hero-kicker::before,
+.hero-kicker::after {
+  content: '';
+  width: 42px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.hero-title {
+  margin-top: clamp(1.2rem, 3vh, 2rem);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(4.2rem, 13vw, 10.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.015em;
+  color: #fff;
+  text-wrap: balance;
+  opacity: 0;
+  transform: translateY(22px);
+  animation: hero-in 1300ms var(--ease) 650ms forwards;
+}
+
+.hero-tagline {
+  margin-top: clamp(1.4rem, 3.2vh, 2.2rem);
+  font-size: clamp(0.68rem, 1vw, 0.8rem);
+  font-weight: 400;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  opacity: 0;
+  transform: translateY(14px);
+  animation: hero-in 1100ms var(--ease) 1050ms forwards;
+}
+
+.hero-actions {
+  margin-top: clamp(2rem, 4.5vh, 3rem);
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(14px);
+  animation: hero-in 1100ms var(--ease) 1350ms forwards;
+}
+
+.hero-scroll {
+  --tx: -50%;
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1.6rem, 4vh, 2.8rem);
+  transform: translateX(-50%);
+  z-index: 2;
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.72);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.8rem;
+  opacity: 0;
+  animation: hero-in 1100ms var(--ease) 1750ms forwards;
+}
+
+.hero-scroll::after {
+  content: '';
+  width: 1px;
+  height: 52px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.08));
+  animation: scroll-pulse 2.6s var(--ease-soft) infinite;
+  transform-origin: top;
+}
+
+@keyframes scroll-pulse {
+  0%, 100% { transform: scaleY(0.35); opacity: 0.4; }
+  55% { transform: scaleY(1); opacity: 1; }
+}
+
+@keyframes hero-in {
+  to {
+    opacity: 1;
+    transform: translateX(var(--tx, 0)) translateY(0);
+  }
+}
+
+/* ============================================================
+   KNAPPER
+   ============================================================ */
+
+.btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 50px; /* god treffflate også på touch */
+  padding: 16px 34px;
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  background: transparent;
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  overflow: hidden;
+  transition: color 340ms var(--ease), transform 160ms var(--ease);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform: scaleY(0);
+  transform-origin: bottom center;
+  transition: transform 480ms var(--ease);
+}
+
+.btn > span {
+  position: relative;
+  z-index: 1;
+}
+
+.btn:hover {
+  color: var(--paper);
+}
+
+.btn:hover::before {
+  transform: scaleY(1);
+}
+
+.btn:active {
+  transform: translateY(1px);
+}
+
+/* Lys variant (over video / mørke seksjoner) */
+.btn--light {
+  border-color: rgba(255, 255, 255, 0.85);
+  color: #fff;
+}
+
+.btn--light::before {
+  background: #fff;
+}
+
+.btn--light:hover {
+  color: var(--ink);
+}
+
+/* Fylt variant */
+.btn--fill {
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.btn--fill::before {
+  background: var(--accent);
+}
+
+.btn--fill:hover {
+  color: #fff;
+}
+
+.btn--large {
+  padding: 19px 46px;
+  min-height: 56px;
+  font-size: 0.72rem;
+}
+
+/* Tekstlenke med pil */
+.arrow-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding-top: 8px; /* større treffflate */
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--ink);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--ink);
+  transition: color 280ms var(--ease), border-color 280ms var(--ease);
+}
+
+.arrow-link::after {
+  content: '\2192';
+  font-size: 1rem;
+  line-height: 1;
+  transition: transform 360ms var(--ease);
+}
+
+.arrow-link:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.arrow-link:hover::after {
+  transform: translateX(6px);
+}
+
+/* ============================================================
+   STATEMENT — stor serif-linje etter hero
+   ============================================================ */
+
+.statement {
+  padding-block: clamp(6rem, 12vw, 11rem) clamp(5rem, 9vw, 8rem);
+  text-align: center;
+}
+
+.statement .eyebrow {
+  justify-content: center;
+}
+
+.statement h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(1.9rem, 4.4vw, 3.6rem);
+  line-height: 1.22;
+  letter-spacing: -0.01em;
+  max-width: 26ch;
+  margin-inline: auto;
+  color: var(--ink);
+  text-wrap: balance;
+}
+
+.statement h2 em {
+  font-style: italic;
+  color: var(--accent);
+}
+
+/* ============================================================
+   MARQUEE — rullende bildestripe (hodne-signatur)
+   ============================================================ */
+
+.marquee {
+  overflow: hidden;
+  padding-block: 0 clamp(5rem, 9vw, 8rem);
+}
+
+.marquee-track {
+  display: flex;
+  width: max-content;
+  animation: marquee 55s linear infinite;
+}
+
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+.marquee-item {
+  flex: 0 0 auto;
+  width: clamp(220px, 24vw, 340px);
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  margin-right: clamp(0.5rem, 1vw, 0.9rem);
+  background: var(--line-soft);
+}
+
+.marquee-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1400ms var(--ease);
+}
+
+.marquee-item:hover img {
+  transform: scale(1.05);
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* ============================================================
+   BIO-TEASER — portrett + tekst
+   ============================================================ */
+
+.bio {
+  padding-block: clamp(5rem, 10vw, 9rem);
+  background: var(--paper-2);
+}
+
+.bio-grid {
+  display: grid;
+  grid-template-columns: 5fr 6fr;
+  gap: clamp(2.5rem, 7vw, 6.5rem);
+  align-items: center;
+}
+
+.bio-image {
+  position: relative;
+  aspect-ratio: 4 / 5;
+}
+
+.bio-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translate(-16px, 16px);
+  border: 1px solid var(--accent);
+  opacity: 0.55;
+  pointer-events: none;
+  transition: transform 700ms var(--ease);
+}
+
+.bio-image:hover::before {
+  transform: translate(-10px, 10px);
+}
+
+.bio-image .frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--line-soft);
+}
+
+.bio-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+  transition: transform 1800ms var(--ease);
+}
+
+.bio-image:hover img {
+  transform: scale(1.03);
+}
+
+.bio-text h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.3rem, 4.8vw, 3.9rem);
+  line-height: 1.06;
+  letter-spacing: -0.015em;
+  margin-bottom: 1.6rem;
+  text-wrap: balance;
+}
+
+.bio-text h2 em {
+  font-style: italic;
+}
+
+.bio-text p {
+  color: var(--mid);
+  max-width: 50ch;
+  margin-bottom: 1.25rem;
+  font-size: clamp(0.98rem, 1.15vw, 1.06rem);
+  line-height: 1.85;
+}
+
+.bio-sign {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.6rem;
+  color: var(--ink);
+  margin: 1.8rem 0 2.2rem;
+}
+
+/* ============================================================
+   TJENESTER — redaksjonelle kort uten ramme
+   ============================================================ */
+
+.services {
+  padding-block: clamp(6rem, 11vw, 10rem);
+}
+
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(2rem, 3.5vw, 3.5rem);
+}
+
+.service {
+  display: flex;
+  flex-direction: column;
+}
+
+.service-image {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--line-soft);
+}
+
+.service-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1600ms var(--ease);
+}
+
+.service:hover .service-image img {
+  transform: scale(1.05);
+}
+
+.service-no {
+  position: absolute;
+  top: 1.1rem;
+  left: 1.2rem;
+  z-index: 2;
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.3em;
+  color: #fff;
+  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+}
+
+.service-body {
+  padding-top: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.service h3 {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.6rem, 2.4vw, 2.1rem);
+  line-height: 1.1;
+  margin-bottom: 0.8rem;
+}
+
+.service p {
+  font-size: 0.96rem;
+  line-height: 1.75;
+  color: var(--mid);
+  margin-bottom: 1.6rem;
+  flex: 1;
+  max-width: 42ch;
+}
+
+.service .arrow-link {
+  align-self: flex-start;
+}
+
+/* ============================================================
+   QUOTE-BREAK — fullbredde bilde med sitat
+   ============================================================ */
+
+.break {
+  position: relative;
+  min-height: clamp(420px, 72vh, 720px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  overflow: hidden;
+  color: #fff;
+  padding: clamp(5rem, 10vw, 8rem) var(--pad);
+}
+
+.break-bg {
+  position: absolute;
+  inset: -6%;
+  background-size: cover;
+  background-position: center 72%;
+  will-change: transform; /* parallax-hook (JS) */
+}
+
+.break::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 9, 5, 0.45);
+}
+
+.break-inner {
+  position: relative;
+  z-index: 2;
+  max-width: 46ch;
+}
+
+.break-inner .eyebrow {
+  color: rgba(255, 255, 255, 0.8);
+  justify-content: center;
+}
+
+.break-inner .eyebrow::before,
+.break-inner .eyebrow::after {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+.break-inner blockquote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.4vw, 2.8rem);
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+
+/* ============================================================
+   GALLERI — redaksjonell collage
+   ============================================================ */
+
+.gallery {
+  padding-block: clamp(6rem, 11vw, 10rem);
+}
+
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: clamp(0.6rem, 1.2vw, 1.1rem);
+  align-items: start;
+}
+
+.gallery-grid figure {
+  position: relative;
+  overflow: hidden;
+  background: var(--line-soft);
+  cursor: zoom-in;
+}
+
+.gallery-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1500ms var(--ease), opacity 600ms var(--ease);
+}
+
+.gallery-grid figure:hover img {
+  transform: scale(1.04);
+}
+
+/* Collage-mønster for 6 bilder */
+.gallery-grid figure:nth-child(1) { grid-column: span 5; aspect-ratio: 4 / 5; }
+.gallery-grid figure:nth-child(2) { grid-column: span 4; aspect-ratio: 3 / 4; margin-top: clamp(1.5rem, 4vw, 3.5rem); }
+.gallery-grid figure:nth-child(3) { grid-column: span 3; aspect-ratio: 3 / 4; }
+.gallery-grid figure:nth-child(4) { grid-column: span 4; aspect-ratio: 3 / 4; }
+.gallery-grid figure:nth-child(5) { grid-column: span 5; aspect-ratio: 16 / 10; margin-top: clamp(-3rem, -2vw, -1rem); }
+.gallery-grid figure:nth-child(6) { grid-column: span 3; aspect-ratio: 3 / 4; margin-top: clamp(1rem, 2.5vw, 2.5rem); }
+
+/* ============================================================
+   ANBEFALING
+   ============================================================ */
+
+.testimonials {
+  padding-block: clamp(6rem, 11vw, 10rem);
+  background: var(--paper-2);
+}
+
+.testimonial {
+  display: grid;
+  grid-template-columns: 4fr 7fr;
+  gap: clamp(2.5rem, 6vw, 5.5rem);
+  align-items: center;
+  max-width: 1180px;
+  margin-inline: auto;
+}
+
+.testimonial-image {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--line-soft);
+}
+
+.testimonial-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1600ms var(--ease);
+}
+
+.testimonial-image:hover img {
+  transform: scale(1.03);
+}
+
+.testimonial-body {
+  position: relative;
+  padding-top: 2.5rem;
+}
+
+.testimonial-body::before {
+  content: '\201C';
+  position: absolute;
+  top: -2.2rem;
+  left: -0.4rem;
+  font-family: var(--serif);
+  font-size: 9rem;
+  line-height: 1;
+  color: var(--accent);
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.testimonial blockquote {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.35rem, 2.5vw, 2rem);
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--ink-2);
+  margin-bottom: 1.8rem;
+}
+
+.testimonial cite {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  font-style: normal;
+  font-size: 0.7rem;
+  font-weight: 500;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--mid);
+}
+
+.testimonial cite::before {
+  content: '';
+  width: 30px;
+  height: 1px;
+  background: var(--accent);
+}
+
+/* ============================================================
+   FAQ — med myk åpne/lukke-animasjon der nettleseren støtter det
+   ============================================================ */
+
+.faq {
+  padding-block: clamp(6rem, 11vw, 10rem);
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: 4fr 7fr;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+}
+
+.faq-list {
+  border-top: 1px solid var(--line);
+}
+
+.faq-item {
+  border-bottom: 1px solid var(--line);
+}
+
+.faq-item summary {
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1.5rem;
+  min-height: 44px; /* WCAG-vennlig treffflate (i praksis ~70px) */
+  padding: 1.6rem 0.25rem;
+  cursor: pointer;
+  font-family: var(--serif);
+  font-size: clamp(1.2rem, 1.9vw, 1.55rem);
+  font-weight: 500;
+  line-height: 1.3;
+  transition: color 260ms var(--ease);
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::marker {
+  content: '';
+}
+
+.faq-item summary:hover {
+  color: var(--accent);
+}
+
+.faq-item summary::after {
+  content: '+';
+  font-family: var(--sans);
+  font-weight: 300;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: var(--accent);
+  flex: 0 0 auto;
+  width: 1.5rem;
+  text-align: center;
+  transition: transform 360ms var(--ease);
+}
+
+.faq-item[open] summary::after {
+  transform: rotate(45deg);
+}
+
+.faq-item .faq-a {
+  padding: 0 0.25rem 1.7rem;
+  color: var(--mid);
+  max-width: 58ch;
+  font-size: 0.97rem;
+  line-height: 1.8;
+}
+
+/* Myk høyde-animasjon (Chrome/Edge 129+). Nettlesere uten støtte
+   åpner/lukker umiddelbart — samme oppførsel som før. */
+@supports (interpolate-size: allow-keywords) {
+  :root {
+    interpolate-size: allow-keywords;
+  }
+}
+
+@supports selector(::details-content) {
+  .faq-item::details-content {
+    block-size: 0;
+    overflow: clip;
+    transition: block-size 420ms var(--ease-soft),
+      content-visibility 420ms allow-discrete;
+  }
+
+  .faq-item[open]::details-content {
+    block-size: auto;
+  }
+}
+
+/* ============================================================
+   CTA + FOOTER — mørk avslutning
+   ============================================================ */
+
+.cta {
+  background: var(--dark);
+  color: var(--cream);
+  text-align: center;
+  padding-block: clamp(7rem, 13vw, 12rem) clamp(6rem, 11vw, 10rem);
+}
+
+.cta .eyebrow {
+  justify-content: center;
+  color: var(--accent);
+}
+
+.cta h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(2.8rem, 7vw, 5.6rem);
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  max-width: 18ch;
+  margin: 0 auto 1.6rem;
+  text-wrap: balance;
+}
+
+.cta h2 em {
+  font-style: italic;
+}
+
+.cta p {
+  color: rgba(246, 241, 231, 0.65);
+  max-width: 52ch;
+  margin: 0 auto clamp(2.2rem, 4.5vw, 3.2rem);
+  font-size: clamp(0.98rem, 1.2vw, 1.08rem);
+  line-height: 1.8;
+}
+
+.cta .btn {
+  border-color: rgba(246, 241, 231, 0.85);
+  color: var(--cream);
+}
+
+.cta .btn::before {
+  background: var(--cream);
+}
+
+.cta .btn:hover {
+  color: var(--dark);
+}
+
+.cta-mail {
+  display: block;
+  margin-top: 2.2rem;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: clamp(1.1rem, 1.8vw, 1.4rem);
+  color: rgba(246, 241, 231, 0.7);
+  transition: color 260ms var(--ease);
+}
+
+.cta-mail:hover {
+  color: var(--accent);
+}
+
+.site-footer {
+  background: var(--dark);
+  color: rgba(246, 241, 231, 0.62);
+  padding: clamp(4rem, 7vw, 6rem) 0 clamp(1.6rem, 3vw, 2.4rem);
+  font-size: 0.88rem;
+  border-top: 1px solid rgba(246, 241, 231, 0.1);
+}
+
+.footer-grid {
+  display: grid;
+  grid-template-columns: 1.6fr 1fr 1fr 1fr;
+  gap: clamp(2.5rem, 4.5vw, 4rem);
+  padding-bottom: clamp(3rem, 5vw, 4.5rem);
+  border-bottom: 1px solid rgba(246, 241, 231, 0.1);
+}
+
+.footer-brand {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(2rem, 3vw, 2.6rem);
+  color: var(--cream);
+  display: inline-block;
+  margin-bottom: 1.1rem;
+  line-height: 1;
+  transition: color 260ms var(--ease);
+}
+
+.footer-brand:hover {
+  color: var(--accent);
+}
+
+.footer-tagline {
+  color: rgba(246, 241, 231, 0.5);
+  line-height: 1.7;
+  max-width: 30ch;
+  font-size: 0.92rem;
+}
+
+.footer-head {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(246, 241, 231, 0.38);
+  margin-bottom: 1.2rem;
+}
+
+.footer-col ul li {
+  margin-bottom: 0.6rem;
+  font-size: 0.9rem;
+}
+
+.footer-col a {
+  transition: color 240ms var(--ease);
+  overflow-wrap: anywhere; /* lange e-postadresser skal aldri renne over */
+}
+
+.footer-col a:hover {
+  color: var(--cream);
+}
+
+.footer-meta {
+  padding-top: clamp(1.6rem, 2.6vw, 2.2rem);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: rgba(246, 241, 231, 0.36);
+}
+
+/* ============================================================
+   UNDERSIDER — page hero
+   ============================================================ */
+
+.page-hero {
+  padding: calc(var(--nav-h) + clamp(4rem, 9vw, 7.5rem)) 0 clamp(3.5rem, 7vw, 6rem);
+  background: var(--paper);
+}
+
+.page-hero .wrap {
+  max-width: 1180px;
+}
+
+.page-hero h1 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-size: clamp(3.2rem, 9vw, 7.5rem);
+  line-height: 0.98;
+  letter-spacing: -0.02em;
+  max-width: 16ch;
+  text-wrap: balance;
+}
+
+.page-hero h1 em {
+  font-style: italic;
+}
+
+.page-hero .lead {
+  margin-top: clamp(1.4rem, 2.4vw, 2rem);
+  color: var(--mid);
+  max-width: 54ch;
+  font-size: clamp(0.98rem, 1.2vw, 1.1rem);
+  line-height: 1.85;
+}
+
+.page-hero-rule {
+  margin-top: clamp(3rem, 6vw, 5rem);
+  border: 0;
+  border-top: 1px solid var(--line);
+}
+
+/* ============================================================
+   OM MEG
+   ============================================================ */
+
+.about {
+  padding-block: clamp(2rem, 5vw, 4rem) clamp(6rem, 10vw, 9rem);
+}
+
+.about-layout {
+  display: grid;
+  grid-template-columns: 5fr 6fr;
+  gap: clamp(2.5rem, 6vw, 6rem);
+  align-items: start;
+  max-width: 1180px;
+}
+
+.about-image {
+  position: sticky;
+  top: calc(var(--nav-h) + 1.5rem);
+}
+
+.about-image .frame {
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  background: var(--line-soft);
+}
+
+.about-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 20%;
+}
+
+.about-image figcaption {
+  margin-top: 0.9rem;
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--faint);
+}
+
+.about-body h2 {
+  font-family: var(--serif);
+  font-weight: 400;
+  font-style: italic;
+  font-size: clamp(1.9rem, 3.6vw, 2.9rem);
+  line-height: 1.12;
+  margin-bottom: 1.4rem;
+}
+
+.about-body p {
+  color: var(--ink-2);
+  max-width: 54ch;
+  margin-bottom: 1.3rem;
+  line-height: 1.9;
+}
+
+.about-pull {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+  line-height: 1.32;
+  color: var(--ink);
+  margin: clamp(2.2rem, 4.5vw, 3.2rem) 0;
+  padding-left: 1.4rem;
+  border-left: 2px solid var(--accent);
+  max-width: 26ch;
+}
+
+.about-facts {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.8rem 2rem;
+  margin-top: clamp(2.4rem, 4.5vw, 3.5rem);
+  padding-top: clamp(2rem, 3.5vw, 2.8rem);
+  border-top: 1px solid var(--line);
+}
+
+.fact-label {
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: var(--faint);
+  margin-bottom: 0.45rem;
+}
+
+.fact-value {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.35rem;
+  line-height: 1.3;
+  color: var(--ink);
+}
+
+/* På sett — BTS-stripe */
+.onset {
+  padding-block: 0 clamp(6rem, 11vw, 10rem);
+}
+
+.onset-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: clamp(0.8rem, 1.5vw, 1.4rem);
+}
+
+.onset-grid figure {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--line-soft);
+  cursor: zoom-in;
+}
+
+.onset-grid figure:nth-child(2) {
+  margin-top: clamp(1.5rem, 3.5vw, 3rem);
+}
+
+.onset-grid img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1500ms var(--ease);
+}
+
+.onset-grid figure:hover img {
+  transform: scale(1.04);
+}
+
+/* ============================================================
+   PROSJEKTER — filter + arkiv
+   ============================================================ */
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: clamp(2rem, 4vw, 3rem);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* god touchflate */
+  padding: 10px 20px;
+  border: 1px solid var(--line);
+  font-size: 0.64rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--mid);
+  transition: border-color 280ms var(--ease), color 280ms var(--ease),
+    background-color 280ms var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+}
+
+.chip[aria-pressed='true'] {
+  background: var(--ink);
+  border-color: var(--ink);
+  color: var(--paper);
+}
+
+.archive {
+  padding-block: clamp(3rem, 6vw, 5rem) clamp(6rem, 11vw, 10rem);
+}
+
+.archive-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  grid-auto-flow: dense;
+  align-items: start;
+  gap: clamp(1.4rem, 2.5vw, 2.4rem) clamp(0.8rem, 1.5vw, 1.4rem);
+}
+
+.archive-item {
+  grid-column: span 4;
+  position: relative;
+  cursor: pointer;
+}
+
+.archive-item--wide {
+  grid-column: span 8;
+}
+
+.archive-image {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 4 / 5;
+  background: var(--line-soft);
+}
+
+.archive-item--wide .archive-image {
+  aspect-ratio: 16 / 9.6;
+}
+
+.archive-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 1700ms var(--ease);
+}
+
+.archive-item:hover .archive-image img {
+  transform: scale(1.04);
+}
+
+.archive-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(19, 17, 9, 0.32), transparent 45%);
+  opacity: 0;
+  transition: opacity 450ms var(--ease);
+}
+
+.archive-item:hover .archive-image::after {
+  opacity: 1;
+}
+
+.archive-meta {
+  padding-top: 0.95rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.archive-title {
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.15rem, 1.7vw, 1.4rem);
+  line-height: 1.2;
+  color: var(--ink);
+  transition: color 280ms var(--ease);
+}
+
+.archive-item:hover .archive-title {
+  color: var(--accent);
+}
+
+.archive-kind {
+  font-size: 0.6rem;
+  font-weight: 500;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--faint);
+  white-space: nowrap;
+}
+
+.archive-item.is-hidden {
+  display: none;
+}
+
+/* ============================================================
+   LIGHTBOX — forberedt for touch-sveip (JS legger på logikk)
+   ============================================================ */
+
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  background: rgba(12, 11, 7, 0.96);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(1rem, 4vw, 3.5rem);
+  opacity: 0;
+  visibility: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  overscroll-behavior: contain;
+  transition: opacity 420ms var(--ease-soft), visibility 0s linear 420ms;
+}
+
+.lightbox.is-open {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 520ms var(--ease-soft), visibility 0s;
+}
+
+.lightbox-img {
+  max-width: 100%;
+  max-height: calc(100vh - 7rem);
+  max-height: calc(100svh - 7rem); /* stabil høyde på iOS */
+  object-fit: contain;
+  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.65);
+  touch-action: pan-y; /* tillat vertikal scroll, horisontal sveip fanges av JS */
+  -webkit-user-drag: none;
+  transform: scale(0.97);
+  transition: transform 300ms var(--ease), opacity 300ms var(--ease);
+}
+
+.lightbox.is-open .lightbox-img {
+  transform: scale(1);
+}
+
+.lightbox-caption {
+  position: absolute;
+  left: 50%;
+  bottom: clamp(1rem, 3vh, 1.8rem);
+  transform: translateX(-50%);
+  max-width: min(88vw, 60ch);
+  padding: 9px 16px;
+  border-radius: 999px;
+  background: rgba(12, 11, 7, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  font-size: 0.66rem;
+  letter-spacing: 0.26em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.lightbox button {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: background-color 280ms var(--ease-soft), transform 360ms var(--ease-soft);
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.lightbox button:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.lightbox-close {
+  top: calc(clamp(1rem, 3vh, 1.8rem) + env(safe-area-inset-top, 0px));
+  right: calc(clamp(1rem, 3vw, 1.8rem) + env(safe-area-inset-right, 0px));
+}
+
+.lightbox-close:hover {
+  transform: rotate(90deg);
+}
+
+.lightbox-prev,
+.lightbox-next {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.lightbox-prev { left: clamp(0.6rem, 2.5vw, 1.6rem); }
+.lightbox-next { right: clamp(0.6rem, 2.5vw, 1.6rem); }
+
+body.lightbox-open {
+  overflow: hidden;
+}
+
+/* ============================================================
+   REVEAL — skjules KUN når JS er tilgjengelig (html.js settes
+   av inline script i <head>). Uten JS er alt innhold synlig.
+   ============================================================ */
+
+html:not(.js) .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+html.js .reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 1000ms var(--ease), transform 1000ms var(--ease);
+  transition-delay: var(--d, 0ms);
+}
+
+html.js .reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* ============================================================
+   YTELSE — utsett rendering av tunge seksjoner under brettet.
+   (.about og .break er bevisst utelatt: sticky, resp. parallax.)
+   ============================================================ */
+
+.statement { content-visibility: auto; contain-intrinsic-size: auto 640px; }
+.marquee { content-visibility: auto; contain-intrinsic-size: auto 560px; }
+.bio { content-visibility: auto; contain-intrinsic-size: auto 780px; }
+.services { content-visibility: auto; contain-intrinsic-size: auto 920px; }
+.gallery { content-visibility: auto; contain-intrinsic-size: auto 1150px; }
+.testimonials { content-visibility: auto; contain-intrinsic-size: auto 680px; }
+.faq { content-visibility: auto; contain-intrinsic-size: auto 800px; }
+.onset { content-visibility: auto; contain-intrinsic-size: auto 880px; }
+.archive { content-visibility: auto; contain-intrinsic-size: auto 1800px; }
+.cta { content-visibility: auto; contain-intrinsic-size: auto 640px; }
+.site-footer { content-visibility: auto; contain-intrinsic-size: auto 480px; }
+
+/* ============================================================
+   RESPONSIVT
+   ============================================================ */
+
+/* Svært store skjermer: behold målspalten, litt romsligere */
+@media (min-width: 1600px) {
+  :root {
+    --max: 1520px;
+  }
+}
+
+@media (max-width: 1080px) {
+  .gallery-grid figure:nth-child(n) {
+    margin-top: 0;
+    grid-column: span 6;
+  }
+
+  .gallery-grid figure:nth-child(5) { grid-column: span 7; }
+  .gallery-grid figure:nth-child(6) { grid-column: span 5; }
+}
+
+@media (max-width: 960px) {
+  .bio-grid,
+  .testimonial,
+  .about-layout,
+  .faq-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+  }
+
+  .bio-image {
+    max-width: 480px;
+  }
+
+  .testimonial-image {
+    max-width: 420px;
+  }
+
+  .about-image {
+    position: static;
+    max-width: 480px;
+  }
+
+  .services-grid {
+    grid-template-columns: 1fr;
+    gap: 3rem;
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  .service p { max-width: none; }
+
+  .archive-item,
+  .archive-item--wide {
+    grid-column: span 6;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+  }
+
+  .footer-brand-col {
+    grid-column: 1 / -1;
+  }
+
+  .onset-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .onset-grid figure:nth-child(2) { margin-top: 0; }
+}
+
+/* Sikkerhetsnett: åpen mobilmeny skal aldri bli hengende igjen
+   på desktop-bredde (f.eks. ved rotasjon/resize). */
+@media (min-width: 701px) {
+  body.menu-open .menu-overlay {
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  body.menu-open {
+    overflow: visible;
+  }
+}
+
+@media (max-width: 700px) {
+  :root {
+    --nav-h: 70px;
+  }
+
+  .nav-links {
+    display: none;
+  }
+
+  .nav-toggle {
+    display: flex;
+  }
+
+  .hero {
+    min-height: 540px;
+  }
+
+  .hero-content {
+    padding-top: calc(var(--nav-h) + 1rem);
+  }
+
+  .hero-kicker {
+    letter-spacing: 0.3em;
+    font-size: 0.6rem;
+  }
+
+  .hero-kicker::before,
+  .hero-kicker::after {
+    width: 26px;
+  }
+
+  .hero-title {
+    font-size: clamp(3.6rem, 19vw, 5.4rem);
+  }
+
+  .hero-tagline {
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    max-width: 26ch;
+    line-height: 2;
+  }
+
+  .btn {
+    padding: 15px 28px;
+  }
+
+  .btn--large {
+    padding: 17px 34px;
+  }
+
+  /* Dramatisk 1-kolonne, men med variert rytme */
+  .gallery-grid {
+    gap: 1rem;
+  }
+
+  .gallery-grid figure:nth-child(n) {
+    grid-column: span 12;
+    margin-top: 0;
+    aspect-ratio: 4 / 5;
+  }
+
+  .gallery-grid figure:nth-child(2),
+  .gallery-grid figure:nth-child(4) {
+    aspect-ratio: 3 / 4;
+  }
+
+  .gallery-grid figure:nth-child(5) {
+    aspect-ratio: 16 / 11;
+  }
+
+  .archive-grid {
+    grid-template-columns: 1fr;
+    gap: 2.4rem;
+  }
+
+  .archive-item,
+  .archive-item--wide {
+    grid-column: span 1;
+  }
+
+  .onset-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  /* Større treffflater på footerlenker */
+  .footer-col ul li {
+    margin-bottom: 0.3rem;
+  }
+
+  .footer-col a {
+    display: inline-block;
+    padding-block: 6px;
+  }
+
+  .footer-meta {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+
+  .marquee-item {
+    width: clamp(180px, 56vw, 240px);
+  }
+
+  .section-head--split {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .faq-item summary {
+    padding: 1.4rem 0.25rem;
+    gap: 1rem;
+  }
+
+  /* Lightbox på mobil: knappene flyttes ned i hjørnene (tommelsone),
+     bildeteksten heves over dem — ingenting overlapper. */
+  .lightbox {
+    padding: 0.75rem;
+  }
+
+  .lightbox-img {
+    max-height: calc(100vh - 11rem);
+    max-height: calc(100svh - 11rem);
+  }
+
+  .lightbox-prev,
+  .lightbox-next {
+    top: auto;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 1rem);
+    transform: none;
+  }
+
+  .lightbox-prev { left: calc(env(safe-area-inset-left, 0px) + 1rem); }
+  .lightbox-next { right: calc(env(safe-area-inset-right, 0px) + 1rem); }
+
+  .lightbox-caption {
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 4.6rem);
+    max-width: 88vw;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-hero h1 {
+    font-size: clamp(2.7rem, 12vw, 4rem);
+  }
+
+  .hero-actions {
+    width: 100%;
+    padding-inline: 1rem;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .menu-overlay nav a {
+    font-size: clamp(2rem, 10vw, 2.8rem);
+  }
+
+  .filters {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .chip {
+    width: 100%;
+  }
+
+  .about-facts {
+    grid-template-columns: 1fr;
+    gap: 1.4rem;
+  }
+
+  /* Én kolonne: lang e-postadresse skal ikke tvinge frem overflow */
+  .footer-grid {
+    grid-template-columns: 1fr;
+    gap: 2.2rem;
+  }
+
+  .testimonial blockquote {
+    font-size: 1.25rem;
+  }
+}
+
+/* Mobiler i landskap: hero skal ikke tvinge frem scroll */
+@media (max-height: 560px) and (orientation: landscape) {
+  .hero {
+    min-height: 100svh;
+  }
+
+  .hero-title {
+    font-size: clamp(3rem, 14vh, 5rem);
+  }
+
+  .hero-scroll {
+    display: none;
+  }
+
+  .menu-overlay nav a {
+    font-size: clamp(1.8rem, 7vh, 2.6rem);
+    padding-block: 0.25rem;
+  }
+}
+
+/* Berøringsskjermer: ingen «hengende» hover-tilstander */
+@media (hover: none) {
+  .gallery-grid figure:active img,
+  .onset-grid figure:active img,
+  .archive-item:active .archive-image img,
+  .service:active .service-image img {
+    transform: scale(1.02);
+  }
+
+  .marquee:hover .marquee-track {
+    animation-play-state: running;
+  }
+}
+
+/* ============================================================
+   REDUSERT BEVEGELSE — stopper også marquee og parallax
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .reveal,
+  html.js .reveal,
+  .hero-kicker,
+  .hero-title,
+  .hero-tagline,
+  .hero-actions,
+  .hero-scroll {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  /* Stans marquee — la brukeren scrolle stripen manuelt i stedet */
+  .marquee {
+    overflow-x: auto;
+  }
+
+  .marquee-track {
+    animation: none !important;
+    transform: none !important;
+  }
+
+  /* Ingen parallax */
+  .break-bg {
+    inset: 0;
+    transform: none !important;
+    will-change: auto !important;
+  }
+}
+
+/* ============================================================
+   PRINT — grunnleggende ryddig utskrift
+   ============================================================ */
+
+@media print {
+  @page {
+    margin: 18mm;
+  }
+
+  .nav,
+  .nav-toggle,
+  .menu-overlay,
+  .skip-link,
+  .hero-video,
+  .hero-scroll,
+  .marquee,
+  .lightbox,
+  .filters,
+  .break-bg {
+    display: none !important;
+  }
+
+  body {
+    background: #fff;
+    color: var(--ink);
+  }
+
+  /* Alt som er skjult for animasjon må være synlig på papir */
+  .reveal,
+  html.js .reveal,
+  .hero-kicker,
+  .hero-title,
+  .hero-tagline,
+  .hero-actions {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+  }
+
+  .hero {
+    height: auto;
+    min-height: 0;
+    background: none;
+    color: var(--ink);
+  }
+
+  .hero::after {
+    content: none;
+  }
+
+  .hero-content {
+    height: auto;
+    padding: 2rem 0;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .hero-kicker,
+  .hero-tagline {
+    color: var(--mid);
+  }
+
+  .hero-title {
+    color: var(--ink);
+    font-size: 3.4rem;
+  }
+
+  .break,
+  .cta,
+  .site-footer {
+    background: #fff;
+    color: var(--ink);
+  }
+
+  .break::after {
+    content: none;
+  }
+
+  .cta p,
+  .cta-mail,
+  .footer-tagline,
+  .footer-brand,
+  .footer-meta,
+  .footer-head,
+  .footer-col a {
+    color: var(--ink-2);
+  }
+
+  .cta .btn {
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .faq-item,
+  .archive-item,
+  .gallery-grid figure,
+  blockquote {
+    break-inside: avoid;
+  }
+}

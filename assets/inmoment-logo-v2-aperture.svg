@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 220" role="img" aria-labelledby="title desc">
+  <title id="title">inmoment logo forslag 2</title>
+  <desc id="desc">Wordmark der o-en er erstattet med et kamera-blender symbol.</desc>
+
+  <rect width="980" height="220" fill="none" />
+
+  <text
+    x="48"
+    y="140"
+    fill="#1d1d21"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="112"
+    font-weight="600"
+    letter-spacing="0.6"
+  >inm</text>
+
+  <g transform="translate(378 114)">
+    <circle cx="0" cy="0" r="40" fill="none" stroke="#7b3f53" stroke-width="4" />
+    <path d="M0 -24 L18 -10 L0 -4 Z" fill="#7b3f53" opacity="0.9" />
+    <path d="M21 -12 L22 12 L8 4 Z" fill="#7b3f53" opacity="0.9" />
+    <path d="M14 19 L-8 24 L0 8 Z" fill="#7b3f53" opacity="0.9" />
+    <path d="M-14 19 L-24 -2 L-5 0 Z" fill="#7b3f53" opacity="0.9" />
+    <path d="M-21 -12 L-4 -24 L-1 -6 Z" fill="#7b3f53" opacity="0.9" />
+    <circle cx="0" cy="0" r="7" fill="#1d1d21" />
+  </g>
+
+  <text
+    x="438"
+    y="140"
+    fill="#1d1d21"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="112"
+    font-weight="600"
+    letter-spacing="0.6"
+  >ment</text>
+</svg>

@@ -1,0 +1,16 @@
+# System / verktøy
+.DS_Store
+node_modules/
+.omc/
+.superpowers/
+.qa_check.py
+plan.md
+
+# Kildemateriell som ikke skal publiseres
+bilder nettside/
+Prosjekter/
+bilde/
+logo-forslag.html
+
+# Redundant videofallback (m4v dekker alle nettlesere)
+video/*.mov

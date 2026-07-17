@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 156 144" role="img" aria-labelledby="title desc">
+  <title id="title">inmoment mark</title>
+  <desc id="desc">Refined symbol mark used in inmoment logo.</desc>
+  <circle cx="56" cy="72" r="32" fill="none" stroke="#7b3f53" stroke-width="3.4" />
+  <path d="M36 48 A32 32 0 0 1 66 40" fill="none" stroke="#1d1d21" stroke-width="2.6" stroke-linecap="round" opacity="0.75" />
+  <circle cx="56" cy="72" r="5.6" fill="#7b3f53" />
+  <path d="M88 72 H120" stroke="#7b3f53" stroke-width="3.4" stroke-linecap="round" />
+  <circle cx="127" cy="72" r="2.8" fill="#1d1d21" opacity="0.85" />
+</svg>

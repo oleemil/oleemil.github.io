@@ -1,0 +1,209 @@
+{
+ "aros-21.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "aros-33.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "bts-fjord.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "bts-fly.jpg": {
+  "w": 1600,
+  "h": 1262,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "bts-kompani.jpg": {
+  "w": 1200,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "bts-tele.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "eiterglod.jpg": {
+  "w": 1600,
+  "h": 900,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "eline-portrett.jpg": {
+  "w": 960,
+  "h": 960,
+  "variants": [
+   480
+  ]
+ },
+ "fredvik.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "fri-18.jpg": {
+  "w": 1600,
+  "h": 1067,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "fri-19.jpg": {
+  "w": 1600,
+  "h": 1067,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "fri-33.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "josefine-og-tuva.jpg": {
+  "w": 1600,
+  "h": 1067,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kompani-keyart.jpg": {
+  "w": 1600,
+  "h": 900,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kompani-still.jpg": {
+  "w": 1600,
+  "h": 900,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kyrpos-11.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kyrpos-15.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kyrpos-26.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kyrpos-32.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "kyrpos-55.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "malin.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "poster.jpg": {
+  "w": 1920,
+  "h": 1080,
+  "variants": [
+   480,
+   900,
+   1400
+  ]
+ },
+ "superheltskolen-wide.jpg": {
+  "w": 1600,
+  "h": 900,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "superheltskolen.jpg": {
+  "w": 600,
+  "h": 338,
+  "variants": [
+   480
+  ]
+ },
+ "tv-opptak.jpg": {
+  "w": 1600,
+  "h": 900,
+  "variants": [
+   480,
+   900
+  ]
+ },
+ "vilde-og-ma.jpg": {
+  "w": 1067,
+  "h": 1600,
+  "variants": [
+   480,
+   900
+  ]
+ }
+}

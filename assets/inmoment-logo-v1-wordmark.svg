@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 220" role="img" aria-labelledby="title desc">
+  <title id="title">inmoment logo forslag 1</title>
+  <desc id="desc">Elegant wordmark med lang linje under moment.</desc>
+
+  <rect width="920" height="220" fill="none" />
+
+  <text
+    x="48"
+    y="138"
+    fill="#1d1d21"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="116"
+    font-weight="600"
+    letter-spacing="0.8"
+  >inmoment</text>
+
+  <path
+    d="M418 156 H860"
+    stroke="#7b3f53"
+    stroke-width="3"
+    stroke-linecap="round"
+  />
+</svg>

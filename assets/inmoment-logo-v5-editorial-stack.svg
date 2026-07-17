@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 320" role="img" aria-labelledby="title desc">
+  <title id="title">inmoment logo v5 editorial stack</title>
+  <desc id="desc">Editorial, stablet wordmark med ren geometri.</desc>
+
+  <rect width="980" height="320" fill="none" />
+
+  <path d="M90 60 H890" stroke="#1d1d21" stroke-width="1.5" opacity="0.18" />
+  <path d="M90 262 H890" stroke="#1d1d21" stroke-width="1.5" opacity="0.18" />
+
+  <text
+    x="120"
+    y="158"
+    fill="#1d1d21"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="124"
+    font-weight="600"
+    letter-spacing="1.2"
+  >in</text>
+
+  <text
+    x="300"
+    y="158"
+    fill="#7b3f53"
+    font-family="'Cormorant Garamond', 'Times New Roman', serif"
+    font-size="124"
+    font-weight="600"
+    letter-spacing="1.2"
+  >moment</text>
+
+  <path d="M300 176 H772" stroke="#7b3f53" stroke-width="2.5" stroke-linecap="round" />
+
+  <text
+    x="304"
+    y="214"
+    fill="#1d1d21"
+    font-family="'Outfit', Arial, sans-serif"
+    font-size="20"
+    font-weight="400"
+    letter-spacing="4.8"
+    opacity="0.74"
+  >FILM  FOTO  KLIPP</text>
+</svg>
