@@ -80,6 +80,26 @@
       heroVideo.muted = true;
       heroVideo.playsInline = true;
 
+      // Smart kildevalg FØR autoplay: mobilvariant på små skjermer
+      // (samme 700px-brudd som CSS), desktopvariant ellers. Kildene
+      // ligger i data-attributter satt i HTML; mangler de, er dette en no-op.
+      const heroSource = heroVideo.querySelector('source');
+      if (heroSource) {
+        const wantedSrc = window.matchMedia('(max-width: 700px)').matches
+          ? heroVideo.getAttribute('data-src-mobile')
+          : heroVideo.getAttribute('data-src-desktop');
+        if (wantedSrc && heroSource.getAttribute('src') !== wantedSrc) {
+          heroSource.src = wantedSrc;
+          heroVideo.load(); // last ny kilde før avspilling vurderes
+        }
+      }
+
+      // Save-Data: brukeren ber om databesparelse – da skal videoen
+      // aldri starte av seg selv (håndteres i grenene nedenfor).
+      const saveData = !!(
+        window.navigator.connection && window.navigator.connection.saveData
+      );
+
       // Fade videoen inn når den faktisk spiller, ut igjen ved pause/tomming
       heroVideo.addEventListener('playing', () => {
         heroVideo.classList.add('is-playing');
@@ -96,6 +116,13 @@
 
       if (reducedMotion) {
         // Respekter reduced motion: ingen autoplay, vis poster/første frame
+        heroVideo.removeAttribute('autoplay');
+        heroVideo.pause();
+      } else if (saveData) {
+        // Respekter Save-Data: aldri autoplay, heller ikke ved interaksjon
+        // (tryPlay/IO/visibilitychange-lytterne under monteres ikke).
+        // .is-playing-lytterne over er fortsatt aktive, men videoen kan
+        // aldri nå 'playing'-tilstand her – klassen forblir korrekt av.
         heroVideo.removeAttribute('autoplay');
         heroVideo.pause();
       } else {
@@ -448,13 +475,36 @@
         imgs.forEach((img) => {
           const clickable = img.closest('figure, div');
           if (!clickable) return;
+
+          // Felles åpningssti for mus og tastatur:
+          // hopp over elementer som er filtrert bort
+          const activate = () => {
+            const visible = imgs.filter((i) => !i.closest('.is-hidden'));
+            open(visible, Math.max(0, visible.indexOf(img)));
+          };
+
           clickable.addEventListener('click', (e) => {
             if (e.target.closest('a')) return;
             e.preventDefault();
-            // hopp over elementer som er filtrert bort
-            const visible = imgs.filter((i) => !i.closest('.is-hidden'));
-            open(visible, Math.max(0, visible.indexOf(img)));
+            activate();
           });
+
+          // Tastaturtilgjengelig: nærmeste figure/div blir en fokuserbar
+          // knapp som åpner samme lightbox. Bilder med tom alt-tekst
+          // (dekorative) hoppes over – de skal ikke få et navnløst
+          // tab-stopp. CSS styler [role="button"]:focus-visible.
+          const altText = (img.getAttribute('alt') || '').trim();
+          if (altText) {
+            clickable.setAttribute('tabindex', '0');
+            clickable.setAttribute('role', 'button');
+            clickable.setAttribute('aria-label', 'Åpne bilde: ' + altText);
+            clickable.addEventListener('keydown', (e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              if (e.target.closest('a')) return; // la lenker styre seg selv
+              e.preventDefault(); // Space skal ikke scrolle siden
+              activate();
+            });
+          }
         });
       });
 

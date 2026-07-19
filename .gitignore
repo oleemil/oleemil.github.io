@@ -14,3 +14,6 @@ logo-forslag.html
 
 # Redundant videofallback (m4v dekker alle nettlesere)
 video/*.mov
+
+# Gamle hero-videokilder (erstattet av hero-1080/720.mp4)
+video/inmoment_videoforside.m4v
