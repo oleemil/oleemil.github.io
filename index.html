@@ -16,6 +16,7 @@
     <meta property="og:image" content="https://oleemil.github.io/img/poster.jpg" />
     <meta property="og:image:width" content="1920" />
     <meta property="og:image:height" content="1080" />
+    <meta property="og:image:alt" content="Stillbilde fra en inmoment-produksjon — dansere på scene i farget lys" />
     <meta property="og:site_name" content="inmoment" />
     <meta property="og:locale" content="nb_NO" />
     <meta name="twitter:card" content="summary_large_image" />
@@ -30,8 +31,8 @@
       href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap"
       rel="stylesheet"
     />
-    <link rel="preload" as="image" href="img/poster.jpg" />
-    <link rel="stylesheet" href="styles.css?v=100" />
+    <link rel="preload" as="image" href="img/poster.webp" type="image/webp" />
+    <link rel="stylesheet" href="styles.css?v=110" />
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -48,6 +49,57 @@
       },
       "email": "kontakt@inmoment.no",
       "url": "https://oleemil.github.io/"
+    }
+    </script>
+    <!-- FAQ-en under er synlig på siden; markeringen gjør at Google kan
+         vise spørsmålene direkte i søkeresultatet. Teksten er ordrett
+         den samme som i <details>-blokkene lenger nede. -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Hvor tidlig bør jeg ta kontakt?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Så tidlig som mulig — særlig for bryllup og arrangementer i sommerhalvåret. Men ta gjerne kontakt på kort varsel også; mindre prosjekter kan ofte løses raskt."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Hva koster et oppdrag?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Hvert prosjekt prises etter omfang, varighet og leveranse. Send meg noen linjer om hva du planlegger, så får du et konkret og uforpliktende tilbud."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Reiser du utenfor Kristiansand?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Ja. Jeg er basert i Kristiansand, men tar oppdrag i hele Norge. Reise og opphold avtales som en del av tilbudet."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Når får jeg bildene eller filmen?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Leveringstid avhenger av prosjektet og avtales alltid før oppstart, slik at du vet nøyaktig hva du kan forvente."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Hva trenger du fra meg før vi starter?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Litt om hvem du er, hva du ønsker deg, og hvor og når det skjer. Resten finner vi ut av sammen — idé, stil og plan legger vi i fellesskap."
+          }
+        }
+      ]
     }
     </script>
   </head>
@@ -86,6 +138,10 @@
 
     <!-- HERO — video helt opp i toppen -->
     <header class="hero" aria-label="inmoment — film og foto">
+      <!-- Ingen <source>/src her med vilje: script.js velger 1080- eller
+           720-varianten og setter kilden først når videoen faktisk skal
+           spilles. Med en fast <source> lastet mobil begge filene (5,8 MB).
+           Uten JS vises posterbildet. -->
       <video
         class="hero-video"
         aria-hidden="true"
@@ -94,13 +150,11 @@
         loop
         playsinline
         webkit-playsinline="true"
-        preload="auto"
-        poster="img/poster.jpg"
+        preload="none"
+        poster="img/poster.webp"
         data-src-desktop="video/hero-1080.mp4"
         data-src-mobile="video/hero-720.mp4"
-      >
-        <source src="video/hero-1080.mp4" type="video/mp4" />
-      </video>
+      ></video>
       <div class="hero-content">
         <p class="hero-kicker">Film &nbsp;·&nbsp; Foto &nbsp;·&nbsp; Kristiansand</p>
         <h1 class="hero-title">inmoment</h1>
@@ -246,7 +300,12 @@
 
       <!-- QUOTE-BREAK -->
       <section class="break" aria-label="Sitat">
-        <div class="break-bg" style="background-image: url('img/aros-33.jpg')"></div>
+        <!-- To varianter: CSS velger den minste som holder på skjermen.
+             Før lastet alle 137 kB aros-33.jpg, også på mobil. -->
+        <div
+          class="break-bg"
+          style="--bg: url('img/aros-33.webp'); --bg-sm: url('img/aros-33-900.webp')"
+        ></div>
         <div class="break-inner reveal">
           <p class="eyebrow eyebrow--center">inmoment</p>
           <blockquote>
@@ -415,6 +474,6 @@
       </div>
     </footer>
 
-    <script src="script.js?v=100"></script>
+    <script src="script.js?v=110"></script>
   </body>
 </html>

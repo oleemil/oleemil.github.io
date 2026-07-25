@@ -3,7 +3,7 @@
    Film og foto ved Eline Ødegaard
    Varmt papir, stor serif, fullskjerm video-hero.
    Revidert: mobiltilpasning, tilgjengelighet (skip-link,
-   html.js-gating av reveal), ytelse (content-visibility),
+   html.js-gating av reveal), stabil sidehøyde (se YTELSE),
    FAQ-animasjon, lightbox forberedt for sveip, print.
    ============================================================ */
 
@@ -556,16 +556,23 @@ body.menu-open {
   object-position: center;
 }
 
-/* Scrim: mørkere topp (for nav) og bunn (for tekst/scroll) */
+/* Scrim: mørkere topp (for nav), bunn (for scroll-hint), et mykt
+   midtbånd bak tittelblokka og en vignett i kantene. Midtbåndet er
+   nøkkelen — videoen har lyse partier (sand, gress, hvite plagg) der
+   0.18 dekning ikke holdt til å bære hvit tekst. */
 .hero::after {
   content: '';
   position: absolute;
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(180deg, rgba(8, 7, 4, 0.5) 0%, rgba(8, 7, 4, 0) 26%),
-    linear-gradient(0deg, rgba(8, 7, 4, 0.55) 0%, rgba(8, 7, 4, 0) 38%),
-    radial-gradient(ellipse at center, rgba(8, 7, 4, 0.18) 0%, rgba(8, 7, 4, 0.32) 100%);
+    linear-gradient(180deg, rgba(8, 7, 4, 0.55) 0%, rgba(8, 7, 4, 0) 24%),
+    linear-gradient(0deg, rgba(8, 7, 4, 0.6) 0%, rgba(8, 7, 4, 0) 34%),
+    radial-gradient(ellipse 80% 52% at 50% 54%,
+      rgba(8, 7, 4, 0.52) 0%, rgba(8, 7, 4, 0.34) 48%,
+      rgba(8, 7, 4, 0.1) 78%, rgba(8, 7, 4, 0) 100%),
+    radial-gradient(ellipse at center,
+      rgba(8, 7, 4, 0) 30%, rgba(8, 7, 4, 0.38) 100%);
   pointer-events: none;
 }
 
@@ -586,7 +593,8 @@ body.menu-open {
   font-weight: 500;
   letter-spacing: 0.42em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.82);
+  text-shadow: 0 1px 12px rgba(8, 7, 4, 0.55);
   display: inline-flex;
   align-items: center;
   gap: 1.1rem;
@@ -612,6 +620,7 @@ body.menu-open {
   line-height: 0.95;
   letter-spacing: -0.015em;
   color: #fff;
+  text-shadow: 0 2px 40px rgba(8, 7, 4, 0.45);
   text-wrap: balance;
   opacity: 0;
   transform: translateY(22px);
@@ -624,7 +633,8 @@ body.menu-open {
   font-weight: 400;
   letter-spacing: 0.4em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.92);
+  text-shadow: 0 1px 14px rgba(8, 7, 4, 0.6);
   opacity: 0;
   transform: translateY(14px);
   animation: hero-in 1100ms var(--ease) 1050ms forwards;
@@ -652,7 +662,8 @@ body.menu-open {
   font-weight: 500;
   letter-spacing: 0.34em;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.72);
+  color: rgba(255, 255, 255, 0.8);
+  text-shadow: 0 1px 12px rgba(8, 7, 4, 0.55);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -891,7 +902,9 @@ body.menu-open {
 
 .bio-image {
   position: relative;
-  aspect-ratio: 4 / 5;
+  /* 4/5 ga 845px portrett mot 463px tekst — ~190px dødt rom over og
+     under tekstspalten. 4/4.4 strammer inn uten å miste portrettformatet. */
+  aspect-ratio: 4 / 4.4;
 }
 
 .bio-image::before {
@@ -985,6 +998,18 @@ body.menu-open {
   background: var(--line-soft);
 }
 
+/* Nummeret (01/02/03) sto på lyse motiver — himmel, hvit vegg — og
+   forsvant. Et smalt scrim øverst gir det alltid nok bæreflate. */
+.service-image::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto;
+  height: 34%;
+  z-index: 1;
+  background: linear-gradient(180deg, rgba(8, 7, 4, 0.42), rgba(8, 7, 4, 0));
+  pointer-events: none;
+}
+
 .service-image img {
   width: 100%;
   height: 100%;
@@ -1005,7 +1030,7 @@ body.menu-open {
   font-weight: 500;
   letter-spacing: 0.3em;
   color: #fff;
-  text-shadow: 0 1px 14px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 1px 10px rgba(0, 0, 0, 0.55);
 }
 
 .service-body {
@@ -1050,15 +1075,26 @@ body.menu-open {
   text-align: center;
   overflow: hidden;
   color: #fff;
+  /* Bunnfarge: sitatet skal være lesbart selv om bakgrunnsbildet
+     ikke laster (eller nettleseren ikke kan webp). */
+  background: var(--dark);
   padding: clamp(3.5rem, 7vw, 5.5rem) var(--pad);
 }
 
+/* HTML setter --bg (full) og --bg-sm (900px). Mobil får den minste. */
 .break-bg {
   position: absolute;
   inset: -6%;
+  background-image: var(--bg-sm, var(--bg));
   background-size: cover;
   background-position: center 72%;
   will-change: transform; /* parallax-hook (JS) */
+}
+
+@media (min-width: 1000px) {
+  .break-bg {
+    background-image: var(--bg, var(--bg-sm));
+  }
 }
 
 .break::after {
@@ -1892,21 +1928,26 @@ html.js .reveal.is-visible {
 }
 
 /* ============================================================
-   YTELSE — utsett rendering av tunge seksjoner under brettet.
-   (.about og .break er bevisst utelatt: sticky, resp. parallax.)
-   ============================================================ */
+   YTELSE — content-visibility fjernet (runde 5)
 
-.statement { content-visibility: auto; contain-intrinsic-size: auto 420px; }
-.marquee { content-visibility: auto; contain-intrinsic-size: auto 460px; }
-.bio { content-visibility: auto; contain-intrinsic-size: auto 880px; }
-.services { content-visibility: auto; contain-intrinsic-size: auto 700px; }
-.gallery { content-visibility: auto; contain-intrinsic-size: auto 1440px; }
-.testimonials { content-visibility: auto; contain-intrinsic-size: auto 560px; }
-.faq { content-visibility: auto; contain-intrinsic-size: auto 580px; }
-.onset { content-visibility: auto; contain-intrinsic-size: auto 800px; }
-.archive { content-visibility: auto; contain-intrinsic-size: auto 1700px; }
-.cta { content-visibility: auto; contain-intrinsic-size: auto 540px; }
-.site-footer { content-visibility: auto; contain-intrinsic-size: auto 480px; }
+   Seksjonene hadde content-visibility: auto med hardkodet
+   contain-intrinsic-size. Gjettene bommet grovt (.gallery 1440px mot
+   faktiske 2237px, .services 700px mot 1091px) og kan uansett ikke
+   stemme på både mobil og desktop samtidig. Målt på forsiden:
+
+     A  content-visibility + gjettet størrelse : FCP 196ms, jitter 779px
+     B  uten content-visibility                : FCP 232ms, jitter   0px
+     C  content-visibility + intrinsic: none   : FCP 200ms, jitter 2132px
+
+   (FCP-median over 7 lastinger med 4x CPU-struping — på uspjeldet
+   maskin er forskjellen ~9ms. «Jitter» = hvor mye sidehøyden endrer
+   seg mens man scroller gjennom siden.)
+
+   B er valgt: 36ms strupet FCP er en billigere pris enn en scrollbar
+   som krymper hele veien ned og ankerposisjoner som flytter seg.
+   Bildene lastes fortsatt utsatt via loading="lazy" + decoding="async",
+   som er der hovedkostnaden faktisk ligger.
+   ============================================================ */
 
 /* ============================================================
    RESPONSIVT
@@ -2499,6 +2540,36 @@ html.js .hero-video {
 
 html.js .hero-video.is-playing {
   opacity: 1;
+}
+
+/* Ingen video skal spilles (reduced motion / Save-Data): vis
+   posterbildet i stedet for en tom flate. JS setter klassen. */
+html.js .hero-video.is-poster {
+  opacity: 1;
+}
+
+/* Uten JS settes videokilden aldri (script.js eier kildevalget), og da
+   tvinger Chrome fram native avspillingskontroller på det tomme
+   <video>-elementet — en kontrollrad tvers over bunnen av heroen.
+   Skjul elementet og vis posterbildet som bakgrunn i stedet. */
+html:not(.js) .hero-video {
+  display: none;
+}
+
+html:not(.js) .hero {
+  background-image: url('img/poster.webp');
+  background-size: cover;
+  background-position: center;
+}
+
+/* Sikkerhetsnett: skulle kontrollene likevel dukke opp (f.eks. hvis
+   videofila feiler), skal de ikke tegnes over heroen. Videoen er
+   dekorativ (aria-hidden) og har ingen kontroller å tilby. */
+.hero-video::-webkit-media-controls,
+.hero-video::-webkit-media-controls-enclosure,
+.hero-video::-webkit-media-controls-panel {
+  display: none !important;
+  -webkit-appearance: none;
 }
 
 /* --- MARQUEE-FADE — myk avmasking i begge kanter --- */

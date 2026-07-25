@@ -80,19 +80,25 @@
       heroVideo.muted = true;
       heroVideo.playsInline = true;
 
-      // Smart kildevalg FØR autoplay: mobilvariant på små skjermer
-      // (samme 700px-brudd som CSS), desktopvariant ellers. Kildene
-      // ligger i data-attributter satt i HTML; mangler de, er dette en no-op.
-      const heroSource = heroVideo.querySelector('source');
-      if (heroSource) {
+      // Kildevalg: mobilvariant på små skjermer (samme 700px-brudd som
+      // CSS), desktopvariant ellers. Kildene ligger i data-attributter.
+      //
+      // HTML har bevisst INGEN <source>/src. Før hadde den det, og da
+      // lastet nettleseren desktop-fila (4,0 MB) med én gang — også på
+      // mobil, hvor JS rett etterpå byttet til mobilfila (1,8 MB).
+      // Resultatet var 5,8 MB video på hver mobilvisning. Nå settes
+      // kilden først når vi faktisk skal spille av, så reduced-motion-
+      // og Save-Data-brukere ikke laster ned video i det hele tatt.
+      // Uten JS vises bare posterbildet — samme resultat som de
+      // grenene allerede gir.
+      const loadHeroSource = () => {
         const wantedSrc = window.matchMedia('(max-width: 700px)').matches
           ? heroVideo.getAttribute('data-src-mobile')
           : heroVideo.getAttribute('data-src-desktop');
-        if (wantedSrc && heroSource.getAttribute('src') !== wantedSrc) {
-          heroSource.src = wantedSrc;
-          heroVideo.load(); // last ny kilde før avspilling vurderes
+        if (wantedSrc && heroVideo.getAttribute('src') !== wantedSrc) {
+          heroVideo.src = wantedSrc; // trigger lasting av valgt fil
         }
-      }
+      };
 
       // Save-Data: brukeren ber om databesparelse – da skal videoen
       // aldri starte av seg selv (håndteres i grenene nedenfor).
@@ -114,18 +120,19 @@
         heroVideo.classList.add('is-playing');
       }
 
-      if (reducedMotion) {
-        // Respekter reduced motion: ingen autoplay, vis poster/første frame
+      if (reducedMotion || saveData) {
+        // Respekter reduced motion / Save-Data: ingen videofil lastes,
+        // og lytterne for avspilling under monteres ikke.
+        //
+        // .is-poster gjør posterbildet synlig. Uten den slår
+        // «html.js .hero-video { opacity: 0 }» inn — den skjuler
+        // videoen til den spiller, og siden den aldri spiller her ble
+        // heroen en tom, mørk flate uten bilde.
         heroVideo.removeAttribute('autoplay');
         heroVideo.pause();
-      } else if (saveData) {
-        // Respekter Save-Data: aldri autoplay, heller ikke ved interaksjon
-        // (tryPlay/IO/visibilitychange-lytterne under monteres ikke).
-        // .is-playing-lytterne over er fortsatt aktive, men videoen kan
-        // aldri nå 'playing'-tilstand her – klassen forblir korrekt av.
-        heroVideo.removeAttribute('autoplay');
-        heroVideo.pause();
+        heroVideo.classList.add('is-poster');
       } else {
+        loadHeroSource();
         let inView = true;
 
         const tryPlay = () => {
@@ -415,6 +422,41 @@
       let index = 0;
       let lastFocused = null;
 
+      /* Lightboxen skal vise STØRSTE variant, ikke miniatyren.
+         img.currentSrc er varianten nettleseren valgte for thumbnailen —
+         på desktop typisk 480w-fila, som lightboxen så blåste opp til
+         ~1300px. Her plukkes bredeste kandidat fra srcset i stedet:
+         webp først, med jpg som reserve hvis webp ikke kan dekodes. */
+      const widestInSrcset = (srcset) => {
+        let best = null;
+        let bestW = -1;
+        (srcset || '').split(',').forEach((part) => {
+          const bits = part.trim().split(/\s+/);
+          if (!bits[0]) return;
+          const w = parseInt(bits[1], 10) || 0;
+          if (w > bestW) {
+            bestW = w;
+            best = bits[0];
+          }
+        });
+        return best;
+      };
+
+      // [foretrukket, reserve] — reserven er alltid et format nettleseren
+      // garantert kan vise (samme fil som <img src>).
+      const fullSources = (img) => {
+        const pic = img.parentElement;
+        const webpSource =
+          pic && pic.tagName === 'PICTURE'
+            ? pic.querySelector('source[type="image/webp"]')
+            : null;
+        const safe =
+          widestInSrcset(img.getAttribute('srcset')) || img.currentSrc || img.src;
+        const preferred =
+          widestInSrcset(webpSource && webpSource.getAttribute('srcset')) || safe;
+        return [preferred, safe];
+      };
+
       // Forhåndslast nabobilder (index ± 1) for rask navigasjon
       const preloadNeighbors = () => {
         if (!current.length) return;
@@ -422,7 +464,7 @@
           const img = current[(n + current.length) % current.length];
           if (img) {
             const pre = new Image();
-            pre.src = img.currentSrc || img.src;
+            pre.src = fullSources(img)[0];
           }
         });
       };
@@ -431,13 +473,26 @@
         const img = current[index];
         if (!img) return;
         lbImg.style.opacity = '0';
-        const tmp = new Image();
-        tmp.onload = () => {
-          lbImg.src = tmp.src;
+        const [preferred, safe] = fullSources(img);
+        const show = (src) => {
+          lbImg.src = src;
           lbImg.alt = img.alt || '';
           lbImg.style.opacity = '1';
         };
-        tmp.src = img.currentSrc || img.src;
+        const tmp = new Image();
+        tmp.onload = () => show(tmp.src);
+        tmp.onerror = () => {
+          // Klarte ikke webp — fall tilbake til jpg framfor tomt bilde
+          if (tmp.src !== safe) {
+            const alt = new Image();
+            alt.onload = () => show(alt.src);
+            alt.onerror = () => show(safe);
+            alt.src = safe;
+          } else {
+            show(safe);
+          }
+        };
+        tmp.src = preferred;
         const label = img.alt ? img.alt + ' — ' : '';
         lbCap.textContent = label + (index + 1) + ' / ' + current.length;
       };
