@@ -392,6 +392,10 @@
       });
     }
 
+    const requestedFilter = new URLSearchParams(window.location.search).get('filter');
+    const requestedChip = chips.find((chip) => chip.dataset.filter === requestedFilter);
+    if (requestedChip) requestedChip.click();
+
     /* ---- Lightbox: piler, tastatur, fokus-felle og sveip ---- */
     const groups = $$('[data-lightbox]');
     if (groups.length) {
@@ -526,15 +530,19 @@
       };
 
       groups.forEach((group) => {
-        const imgs = $$('img', group).filter((img) => !img.closest('[aria-hidden="true"]'));
+        const imgs = $$('img', group).filter((img) => !img.closest('[aria-hidden="true"], a'));
         imgs.forEach((img) => {
+          if (img.closest('[hidden]')) return;
           const clickable = img.closest('figure, div');
           if (!clickable) return;
 
           // Felles åpningssti for mus og tastatur:
           // hopp over elementer som er filtrert bort
           const activate = () => {
-            const visible = imgs.filter((i) => !i.closest('.is-hidden'));
+            const album = img.closest('[data-album]')?.dataset.album;
+            const visible = imgs.filter((i) => album
+              ? i.closest('[data-album]')?.dataset.album === album
+              : !i.closest('.is-hidden, [hidden], [data-album]'));
             open(visible, Math.max(0, visible.indexOf(img)));
           };
 
