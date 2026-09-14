@@ -664,6 +664,26 @@
       lb.addEventListener('touchcancel', endTouch);
     }
 
+    const servicesStory = $('.services-story');
+    if (servicesStory && !reducedMotion) {
+      let shadePending = false;
+      const updateShade = () => {
+        shadePending = false;
+        const rect = servicesStory.getBoundingClientRect();
+        const distance = Math.max(1, rect.height - window.innerHeight);
+        const progress = Math.max(0, Math.min(1, -rect.top / distance));
+        servicesStory.style.setProperty('--scroll-shade', (progress * 0.65).toFixed(3));
+      };
+      const queueShade = () => {
+        if (shadePending) return;
+        shadePending = true;
+        window.requestAnimationFrame(updateShade);
+      };
+      window.addEventListener('scroll', queueShade, { passive: true });
+      window.addEventListener('resize', queueShade, { passive: true });
+      updateShade();
+    }
+
     /* ---- Subtil parallax på .break-bg ----
      rAF-drevet translate3d, maks ~8 % av elementhøyden.
      Kun på finpointerskjermer, uten reduced motion, og bare
