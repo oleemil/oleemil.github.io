@@ -1561,7 +1561,7 @@ body.menu-open {
 .services-story .closing-backdrop {
   background-image: linear-gradient(rgba(15, 17, 16, 0.4), rgba(15, 17, 16, 0.7)),
     url('img/bryllup-kristiansand-427.jpg');
-  background-position: center 65%;
+  background-position: center 42%;
 }
 
 .services-story .closing-backdrop::after {
