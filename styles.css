@@ -1116,6 +1116,36 @@ body.menu-open {
   margin-bottom: 2rem;
 }
 
+@media (max-width: 700px) {
+  .home-page .services-grid {
+    gap: 1.5rem;
+  }
+
+  .home-page .service--text {
+    padding: 1.5rem;
+    background: var(--paper-2);
+    border-top: 3px solid var(--accent);
+  }
+
+  .home-page .service-no {
+    font-family: var(--serif);
+    font-size: 2.5rem;
+    letter-spacing: 0;
+    line-height: 1;
+  }
+
+  .home-page .service h3 {
+    font-size: 2rem;
+    font-style: normal;
+    margin-bottom: 1.2rem;
+  }
+
+  .home-page .service p {
+    color: var(--ink-2);
+    margin-bottom: 2rem;
+  }
+}
+
 .service-inspiration {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -2299,7 +2329,13 @@ html.js .reveal.is-visible {
   }
 
   .hero {
-    min-height: 540px;
+    height: 75svh;
+    min-height: 480px;
+    max-height: 680px;
+  }
+
+  .hero-video {
+    transform: none;
   }
 
   .hero-content {
