@@ -1,0 +1,49 @@
+name: Publish visible Hyttelan profiles
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'hyttelan/visning-data.json'
+      - 'hyttelan/render-synlig.py'
+      - '.github/workflows/hyttelan-visible.yml'
+permissions:
+  contents: write
+concurrency:
+  group: hyttelan-visible
+  cancel-in-progress: false
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install HTML and image tools
+        run: python -m pip install --quiet beautifulsoup4 Pillow
+      - name: Render names, supplied photos and humorous text into HTML
+        run: python hyttelan/render-synlig.py
+      - name: Verify page content without JavaScript
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          import base64,io
+          from PIL import Image
+          s=BeautifulSoup(Path('hyttelan/deltakere.html').read_text(),'html.parser')
+          assert len(s.select('article.profile-open'))==19
+          assert len(s.select('img.profile-photo'))==18
+          for i in s.select('img.profile-photo'):
+              im=Image.open(io.BytesIO(base64.b64decode(i['src'].split(',',1)[1])))
+              assert im.size==(120,120)
+          assert not s.select('article.profile-open[hidden]')
+          print('PASS: 19 static names and profiles; 18 valid embedded images; no hidden cards.')
+          PY
+      - name: Save only event display files
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hyttelan/index.html hyttelan/deltakere.html hyttelan/design-reference.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Show all 19 Hyttelan profiles and embedded photos before JavaScript runs'
+          git push origin HEAD:main
