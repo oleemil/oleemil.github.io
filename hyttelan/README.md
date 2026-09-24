@@ -1,21 +1,21 @@
-# Hyttelan VI · Hovden
+# HYTTELAN VI · Hovden
 
-Static invitation hosted by the existing GitHub Pages site, isolated under `/hyttelan/`. Existing site files, the CNAME and homepage are unchanged.
+GTA / Vice City-inspired invitation for 19 November 2026, with a newly illustrated version of the actual two-gabled cabin in the supplied photograph. This version restores the original hot-pink / purple direction instead of presenting the unedited photograph as the hero.
 
-- Event: 19 November 2026.
-- Default response deadline: 25 September 2026, 18:00 Europe/Oslo. The shared backend is authoritative after synchronization.
-- The hero is the original user-supplied cabin photograph, not generated replacement architecture.
-- No invented participants or confirmations are seeded.
-- Page title/metadata request no search indexing; this is not access control.
+## Open the site without an Inmoment redirect
 
-## Shared RSVP
+[Interactive GitHub preview](https://htmlpreview.github.io/?https://github.com/oleemil/oleemil.github.io/blob/main/hyttelan/index.html)
 
-The existing server and database remain responsible for RSVP validation, shared state, deadline enforcement, host administration and reserve places. The GitHub page does not store answers locally or pretend browser-only changes are shared.
+This uses the third-party HTMLPreview renderer hosted on github.io to display this public file. It is a preview, not a separate GitHub Pages deployment belonging to this account. The existing account-level custom domain has deliberately not been changed.
 
-A user-clicked registration window opens `/lan-share.html` on the existing backend. It runs same-origin, retains secure cookies, shows the name picker and consent, and writes through the existing API. It posts public attendee state back to this page using an exact target-origin allowlist and per-window nonce. The parent validates the sender origin, window reference, nonce and payload. No GitHub login, personal access token, service-role key, or cross-origin host credentials are required.
+## Functionality
 
-The invitation displays the last state received while the RSVP window is open. On a new visit, use **Jeg er med** or **Hent siste svar** to synchronize. It does not claim unattended real-time synchronization when the window is closed. Some in-app browsers may require allowing the new window.
+- Shared participant state refreshes from the existing event API every 12 seconds.
+- Registration opens a first-party RSVP window. It records the response in the existing database, then updates the invitation.
+- Names and real portraits must be entered by the host. The participant roster is currently empty; anonymous dossier artwork is labeled as an empty layout, not an actual participant.
+- No host keys, API secrets, participant data, or fabricated confirmations are included in this repository.
+- The answer deadline is 25 September 2026 at 18:00 Europe/Oslo. Unanswered invitations expire; registered reserves can claim available seats after the deadline.
+- All code and CSS for this page are in index.html. The existing style.css and app.js are retained as historical files but are not loaded.
+- Backend hosting remains separate from GitHub; GitHub Pages alone does not persist form submissions.
 
-## Personalization still needed
-
-The participant-name attachment was not available in the conversation. Enter the actual names and approved portraits using the existing private host panel. Never commit the private host link or host key to this public repository.
+The original photograph appears only in the clearly labeled behind-the-scenes postcard. The hero uses the new illustrated cabin asset.
