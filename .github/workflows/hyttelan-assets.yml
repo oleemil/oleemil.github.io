@@ -1,0 +1,66 @@
+name: Prepare Hyttelan artwork
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/hyttelan-assets.yml'
+permissions:
+  contents: write
+concurrency:
+  group: hyttelan-artwork
+  cancel-in-progress: false
+jobs:
+  artwork:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Install image encoder
+        run: python -m pip install --quiet Pillow
+      - name: Save only the event's approved artwork and update its page
+        shell: python
+        run: |
+          import io, pathlib, urllib.request
+          from PIL import Image
+          root = pathlib.Path('hyttelan')
+          assets = root / 'assets'
+          assets.mkdir(exist_ok=True)
+          entries = [
+            ('https://d8j0ntlcm91z4.cloudfront.net/user_3HZt7St0yOG76jhjpz8tmyp0PrP/hf_20260924_161942_186dc136-35f1-4e00-aafa-92b49e892fb4.png', 'cabin-vice-city.webp', 2048),
+            ('https://d2ol7oe51mr4n9.cloudfront.net/user_3HZt7St0yOG76jhjpz8tmyp0PrP/65d6fdcb-1cc1-472a-aabe-eb08b7b83bfb.jpg', 'cabin-original.webp', 1408),
+            ('https://d8j0ntlcm91z4.cloudfront.net/user_3HZt7St0yOG76jhjpz8tmyp0PrP/hf_20260924_142035_3f491ea8-6377-4e56-ab19-d52ef2cefe23_min.webp', 'anonymous-dossier.webp', 600),
+          ]
+          html = (root / 'index.html').read_text()
+          for url, filename, maximum in entries:
+            with urllib.request.urlopen(url, timeout=40) as response:
+              data = response.read(20 * 1024 * 1024 + 1)
+            if len(data) > 20 * 1024 * 1024:
+              raise RuntimeError('Artwork exceeds size limit')
+            image = Image.open(io.BytesIO(data)).convert('RGB')
+            image.thumbnail((maximum, maximum))
+            image.save(assets / filename, 'WEBP', quality=89, method=6)
+            # Re-encoding discards EXIF/location metadata. All images stay in the event folder.
+            html = html.replace(url, 'https://raw.githubusercontent.com/oleemil/oleemil.github.io/main/hyttelan/assets/' + filename)
+            print(filename, image.size, (assets / filename).stat().st_size)
+          old = "function openRegistration(guest=''){if(state&&!state.guests.length){"
+          new = "function openRegistration(guest=''){if(!state){$('dialog-title').textContent='PÅMELDINGEN ER IKKE KLAR.';$('dialog-body').textContent='Nettsiden åpner, men vi får ikke kontakt med den felles påmeldingen. Ingen svar kan bekreftes akkurat nå.';$('dialog-extra').textContent='Ikke regn deg som påmeldt før du har fått en bekreftelse. Verten må også legge inn navnelisten.';$('join-info').showModal();return;}if(state&&!state.guests.length){"
+          if old in html:
+            html = html.replace(old, new, 1)
+          elif new not in html:
+            raise RuntimeError('Expected registration guard not found; refusing an unverified edit')
+          (root / 'index.html').write_text(html)
+          import re
+          scripts = re.findall(r'<script>([\s\S]*?)</script>', html)
+          pathlib.Path('/tmp/hyttelan-validate.cjs').write_text('\n'.join(scripts))
+      - name: Validate invitation script
+        run: node --check /tmp/hyttelan-validate.cjs
+      - name: Save event assets without touching the rest of the site
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hyttelan/assets hyttelan/index.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Keep Hyttelan illustrations on GitHub and fail safely if RSVP is unavailable'
+          git push origin HEAD:main
