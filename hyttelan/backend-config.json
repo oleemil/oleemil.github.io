@@ -1,0 +1,10 @@
+{
+  "eventId": "5d6d8d4a-8ac2-436e-9a6c-4ec908e951ff",
+  "backend": {
+    "url": "https://greuhqrctbgcnqjbewpt.supabase.co",
+    "publishableKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdyZXVocXJjdGJnY25xamJld3B0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NTk0NTYsImV4cCI6MjA3MjAzNTQ1Nn0.A-MQjXkq8chybR0tY2CUxPDd4tYCT5y3o8OPtAGYSuk"
+  },
+  "guestIds": [
+    "9afe99e1-c544-4386-b4fd-5d0f720ca8a6", "3ba3a32e-7f3d-440e-8e88-bae794745d1a", "e0ee0c84-cce8-4259-8429-581f90a66c98", "6668464c-7287-4d75-afb6-d080cf599790", "3130a6a4-076f-466e-9c90-6fceba0246ea", "6f6814b3-1910-4184-97e5-c5aac6d27470", "fbc04dd9-1cbd-4f2d-8c15-0da8db8a23b7", "53459a8e-38d1-461c-a6ab-ef3211501f5e", "584b4e02-536e-4af8-9bde-0fc6468d2da5", "3b682316-a737-40b5-9ede-42a05564e095", "707193f6-b81b-4f8d-a20c-c47abaf6b5b1", "c8fa91a0-12bf-4ac5-80a3-b3f7126fed8d", "4cda8f15-9dc4-4756-86e9-3de73794ebf0", "8f78408c-01a6-4c9a-b046-9761f34f490d", "b99fda5f-88d5-4503-a467-b4a54c8ffd2f", "6d4caad8-555b-4c43-8072-50808aad8ef3", "4ee9556c-5d49-453c-b34f-7044ee823b99", "3e527993-903f-4697-ba58-f2a9d1998966", "7a9410b0-b7ee-43f9-a3b9-00b7ace0af60"
+  ]
+}
