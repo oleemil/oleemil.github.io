@@ -19,3 +19,7 @@ This uses the third-party HTMLPreview renderer hosted on github.io to display th
 - Backend hosting remains separate from GitHub; GitHub Pages alone does not persist form submissions.
 
 The original photograph appears only in the clearly labeled behind-the-scenes postcard. The hero uses the new illustrated cabin asset.
+
+## Verified availability (24 September 2026)
+
+The styled page and artwork load through the GitHub preview without an Inmoment redirect. The existing external RSVP host currently returns HTTP 401 to anonymous visitors, so public registration is NOT working. The site explicitly prevents false confirmations when the API is unavailable. The roster also has no supplied participant names. Do not distribute this as a functioning RSVP system until the backend and roster are completed.
