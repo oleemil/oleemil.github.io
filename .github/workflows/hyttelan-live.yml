@@ -1,0 +1,85 @@
+name: Build live Hyttelan invitation
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/hyttelan-live.yml'
+      - 'hyttelan/live-client.js'
+      - 'hyttelan/live-style.css'
+      - 'hyttelan/build-live.py'
+      - 'hyttelan/backend-config.json'
+      - 'hyttelan/visning-data.json'
+permissions:
+  contents: write
+concurrency:
+  group: hyttelan-live-build
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install image and HTML parsers
+        run: python -m pip install --quiet Pillow beautifulsoup4
+      - name: Crop the approved labeled portrait sheet
+        shell: python
+        run: |
+          from pathlib import Path
+          from PIL import Image
+          import io, urllib.request
+          url = 'https://d2ol7oe51mr4n9.cloudfront.net/user_3HZt7St0yOG76jhjpz8tmyp0PrP/2792c7eb-4c6f-47c7-b5b7-8c7143d84a00.png'
+          with urllib.request.urlopen(url, timeout=40) as r:
+              raw = r.read(12_000_001)
+          assert len(raw) <= 12_000_000
+          im = Image.open(io.BytesIO(raw)).convert('RGB')
+          assert im.size == (1402,1122)
+          output = Path('hyttelan/assets/portraits')
+          output.mkdir(parents=True, exist_ok=True)
+          xs = [(12,267),(289,543),(561,815),(837,1091),(1110,1364)]
+          ys = [(12,214),(285,491),(555,752),(820,1027)]
+          for i in range(19):
+              x1,x2 = xs[i % 5]
+              y1,y2 = ys[i // 5]
+              im.crop((x1,y1,x2,y2)).save(output / f'player-{i+1:02}.webp','WEBP',quality=92)
+          print('Saved all 19 explicitly labeled portrait cells. No face identification performed.')
+      - name: Check frontend syntax
+        run: node --check hyttelan/live-client.js
+      - name: Build from approved local participant text
+        run: python hyttelan/build-live.py
+      - name: Validate generated invitation
+        shell: python
+        run: |
+          from bs4 import BeautifulSoup
+          from pathlib import Path
+          import json, re
+          root = Path('hyttelan')
+          text = (root / 'index.html').read_text()
+          page = BeautifulSoup(text, 'html.parser')
+          names = [p['name'] for p in json.loads((root/'visning-data.json').read_text())]
+          assert len(page.select('#crew-grid .card')) == 19
+          assert not page.select('#crew-grid .card.ready')
+          assert all(n in page.get_text() for n in names)
+          assert page.select_one('#rsvp-dialog form #rsvp-name')
+          assert page.select_one('#rsvp-consent[required]')
+          assert 'hovden-hyttelan-2026.higgsfield.app' not in text
+          assert 'window.open(' not in text
+          for i in range(1,20): assert (root/f'assets/portraits/player-{i:02}.webp').is_file()
+          scripts = '\n'.join(x.get_text() for x in page.find_all('script'))
+          Path('/tmp/hyttelan-compiled.js').write_text(scripts)
+          print('19 names, 19 portraits, native RSVP, zero fabricated confirmations.')
+      - name: Check compiled JavaScript
+        run: node --check /tmp/hyttelan-compiled.js
+      - name: Save only the completed invitation
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hyttelan/assets/portraits hyttelan/index.html hyttelan/deltakere.html
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Publish 19 illustrated Hyttelan profiles and integrated shared RSVP'
+          git push origin HEAD:main
