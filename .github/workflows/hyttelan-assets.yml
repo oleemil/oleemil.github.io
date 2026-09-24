@@ -34,23 +34,30 @@ jobs:
           ]
           html = (root / 'index.html').read_text()
           for url, filename, maximum in entries:
-            with urllib.request.urlopen(url, timeout=40) as response:
-              data = response.read(20 * 1024 * 1024 + 1)
-            if len(data) > 20 * 1024 * 1024:
-              raise RuntimeError('Artwork exceeds size limit')
-            image = Image.open(io.BytesIO(data)).convert('RGB')
-            image.thumbnail((maximum, maximum))
-            image.save(assets / filename, 'WEBP', quality=89, method=6)
-            # Re-encoding discards EXIF/location metadata. All images stay in the event folder.
+            if not (assets / filename).exists():
+              with urllib.request.urlopen(url, timeout=40) as response:
+                data = response.read(20 * 1024 * 1024 + 1)
+              if len(data) > 20 * 1024 * 1024:
+                raise RuntimeError('Artwork exceeds size limit')
+              image = Image.open(io.BytesIO(data)).convert('RGB')
+              image.thumbnail((maximum, maximum))
+              image.save(assets / filename, 'WEBP', quality=89, method=6)
             html = html.replace(url, 'https://raw.githubusercontent.com/oleemil/oleemil.github.io/main/hyttelan/assets/' + filename)
-            print(filename, image.size, (assets / filename).stat().st_size)
+            print(filename, (assets / filename).stat().st_size)
           old = "function openRegistration(guest=''){if(state&&!state.guests.length){"
           new = "function openRegistration(guest=''){if(!state){$('dialog-title').textContent='PÅMELDINGEN ER IKKE KLAR.';$('dialog-body').textContent='Nettsiden åpner, men vi får ikke kontakt med den felles påmeldingen. Ingen svar kan bekreftes akkurat nå.';$('dialog-extra').textContent='Ikke regn deg som påmeldt før du har fått en bekreftelse. Verten må også legge inn navnelisten.';$('join-info').showModal();return;}if(state&&!state.guests.length){"
           if old in html:
             html = html.replace(old, new, 1)
           elif new not in html:
-            raise RuntimeError('Expected registration guard not found; refusing an unverified edit')
+            raise RuntimeError('Expected registration guard not found')
+          if 'hyttelan-image-layout-fix' not in html:
+            fix = '<style id="hyttelan-image-layout-fix">.polaroid img{height:auto}.polaroids>*{min-width:0}.polaroids{grid-template-columns:minmax(0,1fr) minmax(0,1.05fr) minmax(0,1fr)}@media(max-width:760px){.polaroids{grid-template-columns:repeat(2,minmax(0,1fr))}}</style>'
+            html = html.replace('</head>', fix + '\n</head>', 1)
           (root / 'index.html').write_text(html)
+          readme = root / 'README.md'
+          note = '\n## Verified availability (24 September 2026)\n\nThe styled page and artwork load through the GitHub preview without an Inmoment redirect. The existing external RSVP host currently returns HTTP 401 to anonymous visitors, so public registration is NOT working. The site explicitly prevents false confirmations when the API is unavailable. The roster also has no supplied participant names. Do not distribute this as a functioning RSVP system until the backend and roster are completed.\n'
+          if '## Verified availability' not in readme.read_text():
+            readme.write_text(readme.read_text() + note)
           import re
           scripts = re.findall(r'<script>([\s\S]*?)</script>', html)
           pathlib.Path('/tmp/hyttelan-validate.cjs').write_text('\n'.join(scripts))
@@ -60,7 +67,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add hyttelan/assets hyttelan/index.html
+          git add hyttelan/assets hyttelan/index.html hyttelan/README.md
           if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'Keep Hyttelan illustrations on GitHub and fail safely if RSVP is unavailable'
+          git commit -m 'Fix Hyttelan mobile image layout and document registration availability'
           git push origin HEAD:main
