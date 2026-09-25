@@ -1,0 +1,78 @@
+name: Verify public Hyttelan link preview
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/hyttelan-verify-sharing.yml'
+permissions:
+  contents: read
+concurrency:
+  group: hyttelan-live-build
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Check the live page and JPEG without authentication or JavaScript
+        shell: python
+        run: |
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import hashlib,json,time,urllib.request,urllib.parse,sys
+          sys.path.insert(0,str(Path('hyttelan').resolve()))
+          from share_preview import SHARE_URL,IMAGE_URL,IMAGE_NAME,DEADLINE
+          class Metadata(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.meta={}
+              def handle_starttag(self,tag,attrs):
+                  a=dict(attrs)
+                  if tag=='meta': self.meta[a.get('property',a.get('name',''))]=a.get('content','')
+          def fetch(url,headers=None):
+              req=urllib.request.Request(url,headers=headers or {'User-Agent':'Hyttelan-public-preview-check/1.0'})
+              with urllib.request.urlopen(req,timeout=35) as response:
+                  return response.read(),response.headers.get('Content-Type',''),response.geturl()
+          try:
+              req=urllib.request.Request('https://raw.githack.com/purge?url='+urllib.parse.quote(SHARE_URL,safe=''),method='DELETE')
+              with urllib.request.urlopen(req,timeout=20) as r: print('Cache refresh:',r.status)
+          except Exception as e:
+              print('Optional cache refresh:',str(e))
+          failures=[]; result={}
+          for attempt in range(3):
+              try:
+                  data,content_type,final_url=fetch(SHARE_URL,{'User-Agent':'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)'})
+                  parser=Metadata(); parser.feed(data.decode('utf-8'))
+                  assert 'text/html' in content_type,content_type
+                  assert parser.meta.get('og:image')==IMAGE_URL,parser.meta
+                  assert parser.meta.get('og:url')==SHARE_URL
+                  assert parser.meta.get('og:image:width')=='1200'
+                  assert parser.meta.get('og:image:height')=='630'
+                  assert '27. september' in parser.meta.get('og:description','')
+                  assert 'inmoment' not in final_url
+                  result.update(pageStatus=200,pageContentType=content_type,finalUrl=final_url,metadata=parser.meta,socialCrawlerHtmlVerified=True)
+                  break
+              except Exception as e:
+                  failures.append(str(e)); time.sleep(8)
+          else:
+              Path('public-preview-check.json').write_text(json.dumps({'success':False,'errors':failures},indent=2))
+              raise AssertionError(failures)
+          image,image_type,image_final_url=fetch(IMAGE_URL)
+          local=(Path('hyttelan/assets')/IMAGE_NAME).read_bytes()
+          assert image_type.startswith('image/jpeg'),image_type
+          assert image.startswith(b'\xff\xd8\xff')
+          assert hashlib.sha256(image).digest()==hashlib.sha256(local).digest()
+          result.update(success=True,imageStatus=200,imageContentType=image_type,imageBytes=len(image),imageMatchesApprovedCard=True,attendanceWrites=0,deadlineMs=DEADLINE)
+          Path('public-preview-check.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(result,indent=2,ensure_ascii=False))
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: hyttelan-public-preview-check
+          path: public-preview-check.json
+          retention-days: 7
