@@ -1,6 +1,6 @@
 """Sharing card for the existing, approved Hyttelan invitation.
 Only local invitation files are changed. No attendance records are written.
-HTMLPreview is the user's original viewer, not a server-rendered social-preview host.
+The invitation and its social preview are served directly by GitHub Pages.
 """
 from pathlib import Path
 from datetime import datetime
@@ -9,9 +9,9 @@ import json
 import re
 
 ROOT = Path(__file__).resolve().parent
-SHARE_URL = 'https://htmlpreview.github.io/?https://github.com/oleemil/oleemil.github.io/blob/main/hyttelan/index.html'
+SHARE_URL = 'https://inmoment.no/hyttelan/'
 IMAGE_NAME = 'hyttelan-share-20260927.jpg'
-IMAGE_URL = 'https://raw.githubusercontent.com/oleemil/oleemil.github.io/main/hyttelan/assets/' + IMAGE_NAME
+IMAGE_URL = SHARE_URL + 'assets/' + IMAGE_NAME
 DEADLINE = int(datetime(2026, 9, 27, 18, tzinfo=ZoneInfo('Europe/Oslo')).timestamp() * 1000)
 TITLE = 'HYTTELAN VI · SAMME GJENG. NYTT KAOS.'
 DESCRIPTION = 'Hovden · 19. november 2026. Er du beinklar? Svar innen søndag 27. september kl. 18.00 norsk tid.'
@@ -19,7 +19,7 @@ ALT = 'Hytta fra Hyttelan-forsiden i rosa og lilla GTA-stil, med HYTTELAN VI og 
 
 
 def configure_share(soup):
-    """Keep metadata in the source HTML; this cannot change HTMLPreview's initial response."""
+    """Serve crawlable metadata with the page itself, without a preview intermediary."""
     for tag in list(soup.find_all('meta')):
         if tag.get('property', '').startswith('og:') or tag.get('name', '').startswith('twitter:'):
             tag.decompose()
