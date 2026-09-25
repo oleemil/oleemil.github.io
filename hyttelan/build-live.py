@@ -4,6 +4,7 @@ No database requests, credentials lookup, or attendance writes occur at build ti
 import html,json
 from pathlib import Path
 from bs4 import BeautifulSoup
+from share_preview import configure_share, DEADLINE, SHARE_URL
 ROOT=Path(__file__).resolve().parent
 people=json.loads((ROOT/'visning-data.json').read_text())
 config=json.loads((ROOT/'backend-config.json').read_text())
@@ -14,7 +15,8 @@ for i,p in enumerate(people):
  p.update(id=config['guestIds'][i],role='invite',status='pending',profileVisible=True,confirmedAt=None,
   photo=f'https://raw.githubusercontent.com/oleemil/oleemil.github.io/main/hyttelan/assets/portraits/player-{i+1:02}.webp')
 config.pop('guestIds')
-config['bootstrap']={'ok':True,'serverTime':0,'eventDate':'2026-11-19','deadline':1790352000000,'profileVisibility':'open','registrationOpen':True,'capacity':19,'guests':people}
+config['shareUrl']=SHARE_URL
+config['bootstrap']={'ok':True,'serverTime':0,'eventDate':'2026-11-19','deadline':DEADLINE,'profileVisibility':'open','registrationOpen':True,'capacity':19,'guests':people}
 soup=BeautifulSoup((ROOT/'design-reference.html').read_text(),'html.parser')
 for tag in soup.find_all(['script','dialog']):tag.decompose()
 for tag in soup.select('#popup-fallback'):tag.decompose()
@@ -37,6 +39,7 @@ style=soup.new_tag('style');style.string=(ROOT/'live-style.css').read_text();sou
 script=soup.new_tag('script');script.string='window.HYTTELAN_CONFIG='+json.dumps(config,ensure_ascii=False,separators=(',',':')).replace('<','\\u003c')+';\n'+(ROOT/'live-client.js').read_text();soup.body.append(script)
 for tag in soup.find_all('noscript'):
  tag.clear();tag.append('Bildene og tekstene kan leses uten JavaScript. Slå på JavaScript for felles påmelding.')
+configure_share(soup)
 output=str(soup)
 assert 'hovden-hyttelan-2026.higgsfield.app' not in output
 assert 'window.open(' not in output
