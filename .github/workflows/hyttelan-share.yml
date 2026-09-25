@@ -1,0 +1,99 @@
+name: Publish Hyttelan deadline and sharing card
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/hyttelan-share.yml'
+      - 'hyttelan/share_preview.py'
+permissions:
+  contents: write
+concurrency:
+  group: hyttelan-live-build
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned preview dependencies
+        run: |
+          python -m pip install --quiet Pillow==11.3.0 beautifulsoup4==4.13.5 playwright==1.55.0
+          python -m playwright install --with-deps chromium
+      - name: Extend the fallback deadline and repair the share button
+        run: python hyttelan/share_preview.py patch
+      - name: Build the original invitation without changing attendance
+        run: |
+          node --check hyttelan/live-client.js
+          python hyttelan/build-live.py
+      - name: Screenshot the approved cabin and existing hero design
+        run: python hyttelan/share_preview.py render
+      - name: Verify metadata, countdown, shared state, and unchanged unrelated site
+        shell: python
+        run: |
+          import json, re, subprocess, urllib.request, sys
+          from pathlib import Path
+          from bs4 import BeautifulSoup
+          sys.path.insert(0, str(Path('hyttelan').resolve()))
+          from share_preview import DEADLINE, SHARE_URL, IMAGE_URL, IMAGE_NAME
+          root = Path('hyttelan')
+          text = (root/'index.html').read_text()
+          soup = BeautifulSoup(text, 'html.parser')
+          assert (root/'deltakere.html').read_text() == text
+          assert len(soup.select('#crew-grid .card')) == 19
+          assert not soup.select('#crew-grid .card.ready')
+          assert soup.select_one('#rsvp-dialog form #rsvp-name')
+          assert soup.select_one('#rsvp-consent[required]')
+          assert 'SØNDAG 27. SEPTEMBER KL. 18.00' in soup.select_one('#deadline-text').get_text()
+          assert len(soup.select('meta[property="og:image"]')) == 1
+          assert soup.select_one('meta[property="og:image"]')['content'] == IMAGE_URL
+          assert soup.select_one('meta[property="og:url"]')['content'] == SHARE_URL
+          assert soup.select_one('meta[property="og:image:width"]')['content'] == '1200'
+          assert soup.select_one('meta[property="og:image:height"]')['content'] == '630'
+          scripts = '\n'.join(t.get_text() for t in soup.find_all('script'))
+          Path('/tmp/hyttelan-compiled.js').write_text(scripts)
+          subprocess.run(['node', '--check', '/tmp/hyttelan-compiled.js'], check=True)
+          assert '"deadline":1790524800000' in scripts
+          assert 'const url=C.shareUrl' in scripts
+          config = json.loads((root/'backend-config.json').read_text())
+          key = config['backend']['publishableKey']
+          headers = {'Content-Type':'application/json', 'apikey':key, 'Authorization':'Bearer '+key}
+          req = urllib.request.Request(config['backend']['url']+'/rest/v1/rpc/hyttelan_state', data=json.dumps({'p_event_id':config['eventId']}).encode(), headers=headers)
+          with urllib.request.urlopen(req, timeout=30) as response:
+              state = json.load(response)
+          assert state['ok'] and state['deadline'] == DEADLINE
+          assert len(state['guests']) == 19
+          subprocess.run(['git','diff','--exit-code','--','index.html','CNAME'],check=True)
+          report = {'deadlineNorway':'2026-09-27T18:00:00+02:00','deadlineUtc':'2026-09-27T16:00:00Z','deadlineMs':DEADLINE,'sharedBackendVerified':True,'guestCount':19,'attendanceWrites':0,'shareUrl':SHARE_URL,'imageUrl':IMAGE_URL,'imageSize':[1200,630],'unrelatedSiteChanged':False}
+          (root/'sharing-validation.json').write_text(json.dumps(report,indent=2,ensure_ascii=False)+'\n')
+          print(json.dumps(report,indent=2))
+      - name: Publish only the Hyttelan changes
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add hyttelan/build-live.py hyttelan/live-client.js hyttelan/index.html hyttelan/deltakere.html hyttelan/assets/hyttelan-share-20260927.jpg hyttelan/sharing-validation.json
+          if ! git diff --cached --quiet; then
+            git commit -m 'Set RSVP deadline to Sunday 27 September 18:00 Oslo and publish cabin sharing card'
+            git push origin HEAD:main
+          fi
+      - name: Refresh the direct-view cache
+        continue-on-error: true
+        shell: python
+        run: |
+          import urllib.request, urllib.parse
+          url='https://raw.githack.com/oleemil/oleemil.github.io/main/hyttelan/index.html'
+          req=urllib.request.Request('https://raw.githack.com/purge?url='+urllib.parse.quote(url,safe=''),method='DELETE')
+          with urllib.request.urlopen(req,timeout=30) as response:
+              print('Direct-view cache purge:',response.status)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: hyttelan-sharing-preview
+          path: |
+            hyttelan/assets/hyttelan-share-20260927.jpg
+            hyttelan/sharing-validation.json
+          retention-days: 7
