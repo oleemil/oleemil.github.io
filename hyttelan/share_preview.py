@@ -1,5 +1,6 @@
 """Sharing card for the existing, approved Hyttelan invitation.
 Only local invitation files are changed. No attendance records are written.
+HTMLPreview is the user's original viewer, not a server-rendered social-preview host.
 """
 from pathlib import Path
 from datetime import datetime
@@ -8,7 +9,7 @@ import json
 import re
 
 ROOT = Path(__file__).resolve().parent
-SHARE_URL = 'https://raw.githack.com/oleemil/oleemil.github.io/main/hyttelan/index.html'
+SHARE_URL = 'https://htmlpreview.github.io/?https://github.com/oleemil/oleemil.github.io/blob/main/hyttelan/index.html'
 IMAGE_NAME = 'hyttelan-share-20260927.jpg'
 IMAGE_URL = 'https://raw.githubusercontent.com/oleemil/oleemil.github.io/main/hyttelan/assets/' + IMAGE_NAME
 DEADLINE = int(datetime(2026, 9, 27, 18, tzinfo=ZoneInfo('Europe/Oslo')).timestamp() * 1000)
@@ -18,7 +19,7 @@ ALT = 'Hytta fra Hyttelan-forsiden i rosa og lilla GTA-stil, med HYTTELAN VI og 
 
 
 def configure_share(soup):
-    """Put crawlable metadata in the original HTML, not in JavaScript."""
+    """Keep metadata in the source HTML; this cannot change HTMLPreview's initial response."""
     for tag in list(soup.find_all('meta')):
         if tag.get('property', '').startswith('og:') or tag.get('name', '').startswith('twitter:'):
             tag.decompose()
@@ -63,11 +64,11 @@ def patch_sources():
         build.write_text(text)
     client = ROOT / 'live-client.js'
     js = client.read_text()
-    if 'async function share(){const url=C.shareUrl' not in js:
-        js, count = re.subn(r'async function share\(\)\{const url=.*?;try\{',
-            "async function share(){const url=C.shareUrl||" + json.dumps(SHARE_URL) + ";try{", js, count=1)
-        assert count == 1, 'Expected exactly one existing share function'
-        client.write_text(js)
+    js, count = re.subn(r'async function share\(\)\{const url=.*?;try\{',
+        "async function share(){const url=C.shareUrl||" + json.dumps(SHARE_URL) + ";try{", js, count=1)
+    assert count == 1, 'Expected exactly one existing share function'
+    assert 'raw.githack.com' not in js, 'Sharing must not lead to a confirmation interstitial'
+    client.write_text(js)
     assert DEADLINE == 1790524800000
 
 
