@@ -1,4 +1,4 @@
-name: Verify Hyttelan original viewer without an interstitial
+name: Verify Hyttelan on inmoment GitHub Pages
 on:
   workflow_dispatch:
   push:
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   verify:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - uses: actions/checkout@v4
         with:
@@ -24,69 +24,116 @@ jobs:
         run: |
           python -m pip install --quiet playwright==1.55.0
           python -m playwright install --with-deps chromium
-      - name: Verify the original viewer and report social-preview limitations separately
+      - name: Verify direct HTTPS hosting, social metadata, image and read-only RSVP
         shell: python
         run: |
           from html.parser import HTMLParser
           from pathlib import Path
           from playwright.sync_api import sync_playwright
-          import hashlib,json,urllib.request,sys
+          import hashlib,json,urllib.request,sys,time
           sys.path.insert(0,str(Path('hyttelan').resolve()))
           from share_preview import SHARE_URL,IMAGE_URL,IMAGE_NAME,DEADLINE
-          expected='https://htmlpreview.github.io/?https://github.com/oleemil/oleemil.github.io/blob/main/hyttelan/index.html'
-          assert SHARE_URL==expected
+          assert SHARE_URL=='https://inmoment.no/hyttelan/'
+          assert IMAGE_URL==SHARE_URL+'assets/'+IMAGE_NAME
+          assert Path('CNAME').read_text().strip()=='inmoment.no'
           class Metadata(HTMLParser):
               def __init__(self):
-                  super().__init__(); self.meta={}
+                  super().__init__(); self.meta={}; self.canonical=None
               def handle_starttag(self,tag,attrs):
                   a=dict(attrs)
                   if tag=='meta': self.meta[a.get('property',a.get('name',''))]=a.get('content','')
-          def fetch(url,headers=None):
-              req=urllib.request.Request(url,headers=headers or {'User-Agent':'Hyttelan-preview-check/2.0'})
-              with urllib.request.urlopen(req,timeout=30) as response:
+                  if tag=='link' and a.get('rel')=='canonical': self.canonical=a.get('href')
+          def fetch(url,agent='Hyttelan-GitHub-Pages-check/1.0'):
+              req=urllib.request.Request(url,headers={'User-Agent':agent,'Cache-Control':'no-cache'})
+              with urllib.request.urlopen(req,timeout=15) as response:
                   return response.read(),response.headers.get('Content-Type',''),response.geturl()
-          result={'shareUrl':SHARE_URL,'attendanceWrites':0,'automaticMessengerPreviewVerified':False}
+          result={'shareUrl':SHARE_URL,'imageUrl':IMAGE_URL,'attendanceWrites':0,'testedInsideMessengerApp':False}
           try:
               for name in ('index.html','deltakere.html','live-client.js'):
-                  assert 'raw.githack.com' not in (Path('hyttelan')/name).read_text(),name
-              data,content_type,final_url=fetch(SHARE_URL,{'User-Agent':'facebookexternalhit/1.1'})
-              parser=Metadata(); parser.feed(data.decode('utf-8'))
-              assert 'text/html' in content_type
-              result['initialHtmlContainsCabinOgImage']=parser.meta.get('og:image')==IMAGE_URL
-              result['socialPreviewNote']='HTMLPreview renders the invitation in JavaScript. This test does not establish an automatic Messenger link preview.'
-              image,image_type,_=fetch(IMAGE_URL)
+                  source=(Path('hyttelan')/name).read_text()
+                  assert 'raw.githack.com' not in source,name
+                  assert 'https://htmlpreview.github.io/' not in source,name
+              stop=time.monotonic()+150
+              while True:
+                  try:
+                      data,content_type,final_url=fetch(SHARE_URL)
+                      parser=Metadata(); parser.feed(data.decode('utf-8'))
+                      assert 'text/html' in content_type,content_type
+                      assert final_url==SHARE_URL,final_url
+                      assert parser.canonical==SHARE_URL,parser.canonical
+                      assert parser.meta.get('og:url')==SHARE_URL,parser.meta.get('og:url')
+                      assert parser.meta.get('og:image')==IMAGE_URL,parser.meta.get('og:image')
+                      assert parser.meta.get('og:image:width')=='1200'
+                      assert parser.meta.get('og:image:height')=='630'
+                      break
+                  except Exception as error:
+                      if time.monotonic()>=stop: raise
+                      print('Awaiting Pages deployment:',str(error),flush=True)
+                      time.sleep(5)
+              bot,bot_type,bot_url=fetch(SHARE_URL,'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)')
+              bot_parser=Metadata(); bot_parser.feed(bot.decode('utf-8'))
+              assert bot_url==SHARE_URL and 'text/html' in bot_type
+              assert bot_parser.meta.get('og:image')==IMAGE_URL
+              assert bot_parser.meta.get('og:url')==SHARE_URL
+              image,image_type,image_final=fetch(IMAGE_URL)
               local=(Path('hyttelan/assets')/IMAGE_NAME).read_bytes()
-              assert image_type.startswith('image/jpeg')
+              assert image_type.startswith('image/jpeg'),image_type
+              assert image_final==IMAGE_URL,image_final
               assert hashlib.sha256(image).digest()==hashlib.sha256(local).digest()
-              result['approvedCardAvailable']=True
+              result.update(directHttpStatus=200,directFinalUrl=final_url,interstitial=False,initialHtmlContainsCabinPreview=True,socialCrawlerMetadataVerified=True,imageHttpStatus=200,imageContentType=image_type,imageMatchesApprovedCard=True,imageSize=[1200,630])
               with sync_playwright() as p:
                   browser=p.chromium.launch()
                   context=browser.new_context(viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
+                  context.add_init_script("Object.defineProperty(navigator,'share',{configurable:true,value:async(data)=>{window.__testedShare=data;}});")
                   page=context.new_page()
-                  errors=[]
+                  errors=[]; blocked_writes=[]
                   page.on('pageerror',lambda error: errors.append(str(error)))
-                  page.route('**/rest/v1/rpc/hyttelan_respond',lambda route: route.abort())
+                  def block_rsvp(route):
+                      blocked_writes.append(route.request.url)
+                      route.abort()
+                  page.route('**/rest/v1/rpc/hyttelan_respond',block_rsvp)
                   response=page.goto(SHARE_URL,wait_until='domcontentloaded',timeout=45000)
                   assert response.status==200
-                  page.wait_for_function('window.HYTTELAN_CONFIG && document.querySelectorAll("#crew-grid .card").length===19',timeout=60000)
+                  page.wait_for_function('window.HYTTELAN_CONFIG && document.querySelectorAll("#crew-grid .card").length===19',timeout=30000)
+                  page.wait_for_function('document.querySelector("#sync-label")?.textContent==="LIVE CREW"',timeout=45000)
                   assert page.url==SHARE_URL,page.url
                   assert page.evaluate('window.HYTTELAN_CONFIG.shareUrl')==SHARE_URL
                   assert page.evaluate('window.HYTTELAN_CONFIG.bootstrap.deadline')==DEADLINE
                   page.wait_for_function('document.querySelector(".hero-art img")?.naturalWidth>0',timeout=30000)
-                  assert '27. SEPTEMBER' in page.locator('#deadline-text').inner_text().upper()
-                  page.screenshot(path='hyttelan-original-viewer-mobile.png')
-                  result.update(browserOpenedInvitationDirectly=True,confirmationClicks=0,browserFinalUrl=page.url,guestCards=19,deadlineMs=DEADLINE,javascriptErrors=errors)
+                  deadline_text=page.locator('#deadline-text').inner_text()
+                  assert '27. SEPTEMBER' in deadline_text.upper(),deadline_text
+                  page.screenshot(path='hyttelan-inmoment-mobile.png')
+                  page.locator('[data-share]').first.click()
+                  page.wait_for_function('window.__testedShare?.url === "https://inmoment.no/hyttelan/"',timeout=10000)
+                  page.locator('[data-join]').first.click()
+                  assert page.locator('#rsvp-dialog').evaluate('(d)=>d.open')
+                  assert page.locator('#rsvp-form').is_visible()
+                  assert page.locator('#rsvp-name option').count()==20
+                  assert not page.locator('#rsvp-consent').is_checked()
+                  page.locator('#rsvp-dialog .modal-close').click()
+                  assert not page.locator('#rsvp-dialog').evaluate('(d)=>d.open')
+                  assert not blocked_writes,blocked_writes
+                  result.update(browserOpenedDirectly=True,confirmationClicks=0,browserFinalUrl=page.url,guestCards=19,deadlineMs=DEADLINE,deadlineText=deadline_text,sharedRsvpReadVerified=True,rsvpDialogVerified=True,shareButtonVerified=True,javascriptErrors=errors)
                   assert not errors,errors
+                  desktop=browser.new_page(viewport={'width':1440,'height':1000})
+                  desktop.route('**/rest/v1/rpc/hyttelan_respond',lambda route:route.abort())
+                  desktop.goto(SHARE_URL,wait_until='domcontentloaded',timeout=45000)
+                  desktop.wait_for_function('document.querySelector(".hero-art img")?.naturalWidth>0',timeout=30000)
+                  desktop.screenshot(path='hyttelan-inmoment-desktop.png')
                   browser.close()
-              result['success']=True
+              home,home_type,home_final=fetch('https://inmoment.no/')
+              assert home_final=='https://inmoment.no/'
+              assert b'inmoment' in home.lower()
+              result.update(homepageAvailable=True,homepageMatchesRepository=hashlib.sha256(home).digest()==hashlib.sha256(Path('index.html').read_bytes()).digest(),success=True)
           finally:
               Path('public-preview-check.json').write_text(json.dumps(result,indent=2,ensure_ascii=False)+'\n')
               print(json.dumps(result,indent=2,ensure_ascii=False))
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: hyttelan-original-viewer-check
+          name: hyttelan-inmoment-pages-check
           path: |
             public-preview-check.json
-            hyttelan-original-viewer-mobile.png
+            hyttelan-inmoment-mobile.png
+            hyttelan-inmoment-desktop.png
           retention-days: 7
