@@ -85,12 +85,17 @@ const isLoser = id => cfg.deltakere.losers.includes(id);
 const canJoin = id => !players[id] && (isConfirmed(id) ? now() < T.registreringStenger : isLoser(id) && now() <= T.losersFrist);
 const members = t => Object.values(players).filter(p => p.team === t).sort((a, b) => a.slot - b.slot);
 
-// Torsdag: fyll lag 1 helt, så lag 2 ... Fredag: fyll ledige plasser bakfra.
+// Én og én: torsdagsfolk går til laget med færrest torsdagsspillere, slik at alle lag
+// har folk fra torsdag. Fredagsfolk fyller på laget med færrest spillere totalt.
 function pickSlot(day) {
-  const taken = new Set(Object.values(players).map(p => p.team + ':' + p.slot));
-  const ids = cfg.lag.map(l => l.id);
-  const order = day === 'tor' ? ids : [...ids].reverse();
-  for (const t of order) for (let s = 0; s < cfg.lagStorrelse; s++) if (!taken.has(t + ':' + s)) return { team: t, slot: s };
+  const all = Object.values(players);
+  const count = (t, d) => all.filter(p => p.team === t && (!d || p.day === d)).length;
+  const open = cfg.lag.filter(l => count(l.id) < cfg.lagStorrelse);
+  if (!open.length) return null;
+  const key = l => day === 'tor' ? [count(l.id, 'tor'), count(l.id), l.id] : [count(l.id), count(l.id, 'fre'), l.id];
+  const t = open.sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; })[0].id;
+  const taken = new Set(all.filter(p => p.team === t).map(p => p.slot));
+  for (let s = 0; s < cfg.lagStorrelse; s++) if (!taken.has(s)) return { team: t, slot: s };
   return null;
 }
 
