@@ -92,8 +92,10 @@ function pickSlot(day) {
   const count = (t, d) => all.filter(p => p.team === t && (!d || p.day === d)).length;
   const open = cfg.lag.filter(l => count(l.id) < cfg.lagStorrelse);
   if (!open.length) return null;
-  const key = l => day === 'tor' ? [count(l.id, 'tor'), count(l.id), l.id] : [count(l.id), count(l.id, 'fre'), l.id];
-  const t = open.sort((a, b) => { const x = key(a), y = key(b); return x[0] - y[0] || x[1] - y[1] || x[2] - y[2]; })[0].id;
+  // Blant lagene som står likt, trekkes laget tilfeldig.
+  const key = l => day === 'tor' ? count(l.id, 'tor') * 100 + count(l.id) : count(l.id) * 100 + count(l.id, 'fre');
+  const best = Math.min(...open.map(key)), tied = open.filter(l => key(l) === best);
+  const t = tied[crypto.getRandomValues(new Uint32Array(1))[0] % tied.length].id;
   const taken = new Set(all.filter(p => p.team === t).map(p => p.slot));
   for (let s = 0; s < cfg.lagStorrelse; s++) if (!taken.has(s)) return { team: t, slot: s };
   return null;
