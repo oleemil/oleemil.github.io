@@ -70,3 +70,4 @@ Si f.eks.: *«Legg til konkurransen Heist-race torsdag kl. 21 på hyttelan»*. C
 - Se lagene: `node hyttelan/verktoy/status.mjs`
 - Endre lag, tider eller deltakere: oppdater **både** `data/lan.json` og `firebase/firestore.rules`, og deploy reglene.
 - Flytte en spiller til et annet lag: slett `players/{pid}` og `slots/...` i Firebase-konsollen. Da kan spilleren registrere seg på nytt.
+- Flytte en spiller: `node hyttelan/verktoy/flytt.mjs p02 2` (spiller-ID, lag-ID).
