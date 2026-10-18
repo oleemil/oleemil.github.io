@@ -133,11 +133,11 @@ function route() {
   let h = location.hash.slice(1) || 'hjem';
   if (h === 'crew') h = 'hjem';
   if (h === 'innhold') return $('innhold').focus();
-  if (!document.querySelector(`[data-view="${h}"]`)) h = 'hjem';
-  document.querySelectorAll('[data-view]').forEach(v => v.hidden = v.dataset.view !== h);
+  if (!document.querySelector(`.view[data-view="${h}"]`)) h = 'hjem';
+  document.querySelectorAll('.view[data-view]').forEach(v => v.hidden = v.dataset.view !== h);
   document.querySelectorAll('[data-route]').forEach(a => a.dataset.route === h ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'));
   document.querySelector('.tabbar [aria-current]')?.scrollIntoView({ block: 'nearest', inline: 'center' });
-  document.body.dataset.view = h;
+  document.body.dataset.route = h;
   if (location.hash === '#crew') $('crew')?.scrollIntoView(); else scrollTo(0, 0);
 }
 addEventListener('hashchange', route);
