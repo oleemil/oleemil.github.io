@@ -53,9 +53,9 @@ Si f.eks.: *«Legg til konkurransen Heist-race torsdag kl. 21 på hyttelan»*. C
 ```
 
 - `status`: `kommer` → `pagar` (vises med blinkende merke) → `ferdig`.
-- **Resultat:** sett `"status": "ferdig"` og `"resultat": [2, 0, 4, 1, 3]` (lag-ID i plasseringsrekkefølge). Det gir poeng fra `plasseringspoeng` (10, 7, 5, 3, 1). Ved delt plass: `"resultat": [[2, 0], 4, 1, 3]` gir begge lagene poengene for 1. plass.
-- Egen poengskala for én konkurranse: `"poeng": [20, 10, 5, 0, 0]`, eller fritt per lag: `"poengPerLag": { "0": 3, "2": 8 }`.
-- Lag-ID: 0 Vice Hovden Vipers, 1 Leonida Lemen, 2 Grand Theft Aurora, 3 Snøscooter Syndikatet, 4 Fjellvidda Flamingos.
+- **Resultat:** sett `"status": "ferdig"` og `"resultat": [2, 0, 3, 1]` (lag-ID i plasseringsrekkefølge). Det gir poeng fra `plasseringspoeng` (10, 7, 5, 3). Ved delt plass: `"resultat": [[2, 0], 3, 1]` gir begge lagene poengene for 1. plass, og neste lag blir nr. 3.
+- Egen poengskala for én konkurranse: `"poeng": [20, 10, 5, 0]`, eller fritt per lag: `"poengPerLag": { "0": 3, "2": 8 }`.
+- Lag-ID: 0 Vice Hovden Vipers, 1 Leonida Lemen, 2 Grand Theft Aurora, 3 Fjellvidda Flamingos. 4 lag à 5 plasser.
 
 ## Straff for jobbing (§5.3)
 

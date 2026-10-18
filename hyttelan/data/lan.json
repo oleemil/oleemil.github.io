@@ -7,20 +7,19 @@
     "noobIntervallTimer": 3,
     "registreringStenger": "2026-11-21T01:00:00+01:00"
   },
-  "lagStorrelse": 4,
+  "lagStorrelse": 5,
   "lag": [
     { "id": 0, "navn": "Vice Hovden Vipers", "kort": "VHV", "farge": "#76f0b2", "slagord": "Neon i snøen. Gift i blikket." },
     { "id": 1, "navn": "Leonida Lemen", "kort": "LL", "farge": "#ffb347", "slagord": "Små, sinte og overalt samtidig." },
     { "id": 2, "navn": "Grand Theft Aurora", "kort": "GTA", "farge": "#5ce1e6", "slagord": "Vi stjeler nordlyset. Og seieren." },
-    { "id": 3, "navn": "Snøscooter Syndikatet", "kort": "SS", "farge": "#c6a7ff", "slagord": "Full gass. Null bremser. Null alibi." },
-    { "id": 4, "navn": "Fjellvidda Flamingos", "kort": "FF", "farge": "#ff4fa2", "slagord": "Rosa fjær. Kalde føtter. Varme våpen." }
+    { "id": 3, "navn": "Fjellvidda Flamingos", "kort": "FF", "farge": "#ff4fa2", "slagord": "Rosa fjær. Kalde føtter. Varme våpen." }
   ],
   "deltakere": {
     "_forklaring": "id peker på rekkefølgen i visning-data.json (p01 = første person). 'bekreftet' kan velge dag frem til registreringen stenger. 'losers' må velge innen losersFrist.",
     "bekreftet": ["p01", "p02", "p03", "p04", "p05", "p06", "p07", "p08", "p09", "p12", "p13", "p15", "p18", "p19"],
     "losers": ["p10", "p11", "p14", "p16", "p17"]
   },
-  "plasseringspoeng": [10, 7, 5, 3, 1],
+  "plasseringspoeng": [10, 7, 5, 3],
   "konkurranser": [],
   "justeringer": [],
   "avstemminger": []

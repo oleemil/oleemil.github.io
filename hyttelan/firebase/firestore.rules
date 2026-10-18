@@ -15,8 +15,8 @@ service cloud.firestore {
     function startskudd() { return 1795114800000; }
     function noobSlutt() { return 1795201200000; }
     function registreringStenger() { return 1795219200000; }
-    function antallLag() { return 5; }
-    function lagStorrelse() { return 4; }
+    function antallLag() { return 4; }
+    function lagStorrelse() { return 5; }
 
     function kanMeldePa(pid) {
       return (pid in bekreftet() && nu() < registreringStenger())
