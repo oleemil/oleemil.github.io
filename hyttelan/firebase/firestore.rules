@@ -1,0 +1,96 @@
+rules_version = '2';
+// Hyttelan VI · Hovden. Tidene her må stemme med ../data/lan.json.
+// Ingen innlogging: påmelding er tillitsbasert, men reglene hindrer
+// overskriving, dobbel plass, juks med tidsstempler og poeng.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function bekreftet() {
+      return ['p01','p02','p03','p04','p05','p06','p07','p08','p09','p12','p13','p15','p18','p19'];
+    }
+    function losers() { return ['p10','p11','p14','p16','p17']; }
+    function nu() { return request.time.toMillis(); }
+    // 2026-10-18 23:59:59 Oslo, 2026-11-19 20:00 Oslo, 2026-11-20 20:00 Oslo, 2026-11-21 01:00 Oslo
+    function losersFrist() { return 1792360799000; }
+    function startskudd() { return 1795114800000; }
+    function noobSlutt() { return 1795201200000; }
+    function registreringStenger() { return 1795219200000; }
+    function antallLag() { return 5; }
+    function lagStorrelse() { return 4; }
+
+    function kanMeldePa(pid) {
+      return (pid in bekreftet() && nu() < registreringStenger())
+          || (pid in losers() && nu() <= losersFrist());
+    }
+
+    match /players/{pid} {
+      allow read: if true;
+      allow create: if kanMeldePa(pid)
+        && request.resource.data.keys().hasOnly(['pid','day','team','slot','terms','loser','createdAt'])
+        && request.resource.data.keys().hasAll(['pid','day','team','slot','terms','loser','createdAt'])
+        && request.resource.data.pid == pid
+        && request.resource.data.day in ['tor','fre']
+        && request.resource.data.terms == true
+        && request.resource.data.loser == (request.resource.data.day == 'fre')
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.team is int
+        && request.resource.data.slot is int
+        && request.resource.data.team >= 0 && request.resource.data.team < antallLag()
+        && request.resource.data.slot >= 0 && request.resource.data.slot < lagStorrelse()
+        && getAfter(/databases/$(database)/documents/slots/$('t' + string(request.resource.data.team) + 's' + string(request.resource.data.slot))).data.pid == pid;
+      allow update, delete: if false;
+    }
+
+    match /slots/{sid} {
+      allow read: if true;
+      allow create: if request.resource.data.keys().hasOnly(['pid','team','slot'])
+        && request.resource.data.pid is string
+        && sid == 't' + string(request.resource.data.team) + 's' + string(request.resource.data.slot)
+        && !exists(/databases/$(database)/documents/players/$(request.resource.data.pid))
+        && getAfter(/databases/$(database)/documents/players/$(request.resource.data.pid)).data.team == request.resource.data.team
+        && getAfter(/databases/$(database)/documents/players/$(request.resource.data.pid)).data.slot == request.resource.data.slot;
+      allow update, delete: if false;
+    }
+
+    // Noob-sjekk: kun fredagsfolk, én melding per reset, servertid avgjør poeng.
+    match /noobs/{nid} {
+      allow read: if true;
+      allow create: if nu() >= startskudd() && nu() < noobSlutt()
+        && request.resource.data.keys().hasOnly(['pid','w','text','createdAt'])
+        && request.resource.data.keys().hasAll(['pid','w','text','createdAt'])
+        && request.resource.data.pid is string
+        && get(/databases/$(database)/documents/players/$(request.resource.data.pid)).data.day == 'fre'
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.w == math.floor((nu() - startskudd()) / 10800000.0)
+        && nid == request.resource.data.pid + '_' + string(request.resource.data.w)
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 4
+        && request.resource.data.text.size() <= 160
+        && request.resource.data.text.lower().matches('.*noob.*');
+      allow update, delete: if false;
+    }
+
+    // Anonym avstemming: verten oppretter votes/{vid} med verktoy/opprett-avstemming.mjs.
+    // Stemmen er ikke lesbar for noen i gjengen; bare summen publiseres.
+    match /votes/{vid} {
+      allow read: if true;
+      allow write: if false;
+    }
+    match /ballots/{bid} {
+      allow read: if false;
+      allow create: if request.resource.data.keys().hasOnly(['vote'])
+        && request.resource.data.vote in ['ja','nei']
+        && bid.matches('^v[0-9]+_p[0-9]{2}$')
+        && exists(/databases/$(database)/documents/votes/$(bid.split('_')[0]))
+        && nu() >= get(/databases/$(database)/documents/votes/$(bid.split('_')[0])).data.apner
+        && nu() < get(/databases/$(database)/documents/votes/$(bid.split('_')[0])).data.stenger
+        && bid.split('_')[1] != get(/databases/$(database)/documents/votes/$(bid.split('_')[0])).data.spiller
+        && exists(/databases/$(database)/documents/players/$(bid.split('_')[1]));
+      allow update, delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

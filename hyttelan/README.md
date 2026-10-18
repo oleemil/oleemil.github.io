@@ -1,48 +1,72 @@
-# HYTTELAN VI · Hovden
+# HYTTELAN VI · Hovden · konkurranseplattform
 
-The invitation now contains the 19 participants supplied by the organizer, their approved GTA-style illustrated portraits, and the personalized fictional LAN biographies. The original neon cabin design is preserved.
+Live: https://inmoment.no/hyttelan/ (GitHub Pages). Kun mappen `hyttelan/` hører til dette. Resten av inmoment.no er en annen nettside og skal ikke røres.
 
-## Open the working invitation
+## Hva siden gjør
 
-[Open the GitHub-hosted file through HTMLPreview](https://htmlpreview.github.io/?https://github.com/oleemil/oleemil.github.io/blob/7056ae2294257eb60b1f15407dea7ef164662c8b/hyttelan/index.html)
+- **Hjem**: nedtelling til startskuddet torsdag 19. november kl. 20.00, status og crewet.
+- **Velg dag** (fire steg): navn → torsdag (helt) eller fredag (loser) → vilkår → trekning med spilleautomat som viser laget ditt.
+- **Lag**: poengtavle og lagoppstilling, oppdatert live.
+- **Konkurranser**: leses fra `data/lan.json`.
+- **Noob-sjekk**: fredagsfolk melder seg som noob én gang per reset (hver 3. time fra startskuddet til fredag kl. 20.00). Poeng: 1 innen 5 min, 0,5 innen 15 min, 0,1 resten av første time, ellers 0.
+- **Regler**: konkurransereglene og vilkårene.
+- **Losers**: de som ikke svarte på første invitasjon. De kan bli med frem til `tider.losersFrist`. Etterpå står de der som WASTED. Fredagsfolk vises også her.
 
-[Latest source](https://github.com/oleemil/oleemil.github.io/tree/main/hyttelan)
+## Filer
 
-HTMLPreview is an independent renderer hosted on github.io; it is not a new account-owned GitHub Pages deployment. This link does not redirect to the account's existing custom domain. The RSVP works inside this view using the live Supabase backend. No Higgsfield page, popup, GitHub login, or extra guest account is required.
+| Fil | Innhold |
+| --- | --- |
+| `index.html` | Siden. |
+| `plattform.js` | All logikk (Firebase Firestore via gstatic CDN). |
+| `plattform.css` | Stiler for plattformen. Bygger på `base.css` (opprinnelig design) og `live-style.css`. |
+| `data/lan.json` | **Det du redigerer:** tider, lag, deltakere, poengskala, konkurranser, straffer og avstemminger. |
+| `visning-data.json` | Profilene. Rekkefølgen gir ID: første person = `p01`, bilde `assets/portraits/player-01.webp`. |
+| `firebase/firestore.rules` | Sikkerhetsregler. Tider og deltakerlister er hardkodet her og må stemme med `lan.json`. |
+| `verktoy/` | Vertsverktøy: `status.mjs` (lagoversikt), `tell-stemmer.mjs` (opptelling). |
 
-## Current behavior
+Gamle filer fra invitasjonen (`build-live.py`, `live-client.js`, `app.js`, `design-reference.html` m.fl.) er ikke i bruk lenger. `build-live.py` og workflowen `hyttelan-live.yml` må **ikke** kjøres, fordi de overskriver `index.html` med den gamle Supabase-invitasjonen.
 
-All 19 profiles are intentionally OPEN until the organizer asks for locking. Open profiles are NOT confirmations. No real guest was confirmed during development or testing.
+## Backend
 
-The guest presses “Jeg er med!”, chooses their own name, checks the self-confirmation box, and submits. “MISSION PASSED” appears only after the database has saved a confirmed answer. “Jeg kan ikke komme” saves a decline. Other browsers refresh the shared status automatically every seven seconds while visible.
+Firebase-prosjekt `hyttelan-hovden` (Firestore, eur3) på ole.emil.urstad@gmail.com. Ingen innlogging: påmeldingen er tillitsbasert, men reglene hindrer overskriving, dobbel lagplass, falske tidsstempler, noob-meldinger fra torsdagsfolk og mer enn én noob per reset.
 
-The trip date is 19 November 2026. The answer deadline is 25 September 2026 at 18:00 Europe/Oslo (16:00 UTC). Unanswered invitations become WASTED after the server-side deadline; confirmed guests keep their places. Registered reserves can claim available capacity after the deadline. The organizer must add reserve names; the page does not invent replacements.
+Samlinger: `players/{pid}`, `slots/t{lag}s{plass}`, `noobs/{pid}_{vindu}`, `votes/{sak}` (opprettes av verten), `ballots/{sak}_{pid}` (ikke lesbar for noen andre enn eieren).
 
-Name selection is trust-based, not identity verification. The server prevents overwriting a answered name, duplicate requests, and oversubscription. The organizer can correct mistakes through the authorized database connection. There is no publicly accessible admin mutation.
+Testprosjekt: `hyttelan-hovden-test`. Åpne siden med `?test=1` for å bruke det. Tider kan overstyres i testmodus, f.eks. `?test=1&startskudd=2026-10-18T14:00:00%2B02:00`.
 
-## Implementation
+Deploy regler: `cd hyttelan/firebase && firebase deploy --only firestore:rules --project hyttelan-hovden`
 
-- `design-reference.html`: retained visual source.
-- `visning-data.json`: organizer-approved names and fictional biographies.
-- `assets/portraits/player-01.webp` through `player-19.webp`: cropped from the explicitly labeled, approved illustration sheet. The JO card remains a silhouette, as supplied.
-- `live-client.js`: shared reads, on-page registration, validated server responses, idempotent retries, filters, search, share and calendar export.
-- `live-style.css`: portrait and registration styles.
-- `backend-config.json`: public anon key, event ID, and public guest IDs; no service-role or admin credential.
-- `build-live.py`: compiles only already-approved local content. It does not query or mutate the database.
-- `.github/workflows/hyttelan-live.yml`: crops the approved artwork, validates and compiles the invitation, and commits only the event output.
+## Oppskrift: legg til en konkurranse (med Claude)
 
-Supabase storage is isolated in `hyttelan_private`. Only the narrowly scoped `hyttelan_state` and `hyttelan_respond` RPCs are public. Raw participant tables are inaccessible to anonymous visitors. The API is authoritative for attendance, capacity, deadline and current visibility. Browser storage contains only retry IDs, never the shared RSVP database.
+Si f.eks.: *«Legg til konkurransen Heist-race torsdag kl. 21 på hyttelan»*. Claude legger et objekt i `konkurranser` i `data/lan.json`, committer og pusher:
 
-## Verification completed on 25 September 2026, Norwegian time
+```json
+{
+  "id": "k1",
+  "navn": "Heist-race i Vice City",
+  "spill": "GTA VI",
+  "tidspunkt": "2026-11-19T21:00:00+01:00",
+  "status": "kommer",
+  "beskrivelse": "Lagene kjører samme heist. Raskeste lag vinner.",
+  "regler": ["Alle på laget må være med i bilen", "Omstart = +30 sek"]
+}
+```
 
-61 automated checks passed: 45 browser checks and 16 live API checks. Browser testing used headless Chromium at 320, 390 and 1440 pixels. It was not a physical iPhone/Safari test.
+- `status`: `kommer` → `pagar` (vises med blinkende merke) → `ferdig`.
+- **Resultat:** sett `"status": "ferdig"` og `"resultat": [2, 0, 4, 1, 3]` (lag-ID i plasseringsrekkefølge). Det gir poeng fra `plasseringspoeng` (10, 7, 5, 3, 1). Ved delt plass: `"resultat": [[2, 0], 4, 1, 3]` gir begge lagene poengene for 1. plass.
+- Egen poengskala for én konkurranse: `"poeng": [20, 10, 5, 0, 0]`, eller fritt per lag: `"poengPerLag": { "0": 3, "2": 8 }`.
+- Lag-ID: 0 Vice Hovden Vipers, 1 Leonida Lemen, 2 Grand Theft Aurora, 3 Snøscooter Syndikatet, 4 Fjellvidda Flamingos.
 
-The actual published GitHub preview loaded anonymously with all 19 portraits and profiles, no broken images, no horizontal overflow, a working name search and modal, and no unhandled JavaScript errors.
+## Straff for jobbing (§5.3)
 
-Writes were tested against a SEPARATE temporary event through the same deployed functions and client. A confirmation in one browser appeared in a second independent browser and survived a full reload. Declines, duplicate retries, conflicting claims, missing consent, network errors, server-side expiry, hiding unconfirmed profile fields, and two simultaneous reserves competing for the final seat were checked. Only one reserve obtained that seat.
+1. Legg til i `justeringer`: `{ "lag": 3, "poeng": -3, "grunn": "Svarte på jobbmail", "tidspunkt": "2026-11-20T14:12:00+01:00" }`
+2. Legg til en avstemming i `avstemminger`. ID-en må være `v` + tall:
+   `{ "id": "v1", "spiller": "p07", "sporsmal": "Skal Lars utestenges fra neste konkurranse?", "grunn": "Jobbmail", "apner": "2026-11-20T14:15:00+01:00", "stenger": "2026-11-20T15:00:00+01:00" }`
+3. Åpne den i databasen: `node hyttelan/verktoy/opprett-avstemming.mjs v1` (stemmer avvises før `apner`, etter `stenger` og fra den anklagede).
+4. Når den er stengt: `node hyttelan/verktoy/tell-stemmer.mjs v1`. Skriv summen inn som `"resultat": { "ja": 6, "nei": 4, "utfall": "Utestengt fra neste konkurranse" }`.
 
-The temporary event, its five test profiles, and its request records were removed after testing. The actual invitation was verified with 19 pending responses and zero confirmations. Unrelated legacy tables were checked with zero-row requests only; anonymous access was denied.
+## Andre vertsoppgaver
 
-## Future locking
-
-Only act when the organizer requests it. Change the event visibility to `on_confirmation` without resetting attendance. Also update the static HTML/bootstrap so pending profiles are not briefly shown before the first API response. The current artwork and fictional text are intentionally public in Git history; visual locking is a reveal mechanic, not a promise that previously published material can be made secret.
+- Se lagene: `node hyttelan/verktoy/status.mjs`
+- Endre lag, tider eller deltakere: oppdater **både** `data/lan.json` og `firebase/firestore.rules`, og deploy reglene.
+- Flytte en spiller til et annet lag: slett `players/{pid}` og `slots/...` i Firebase-konsollen. Da kan spilleren registrere seg på nytt.
